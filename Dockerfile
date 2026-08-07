@@ -26,10 +26,7 @@ ENV DEEPSEEK_ENABLED=false \
     DEEPSEEK_TIMEOUT_SECONDS=8 \
     DATABASE_URL=sqlite:////data/orders.db
 
-# Persistent storage is provided by the platform (Railway volume mounted at
-# /data, or a host bind mount) — Docker VOLUME is intentionally not used
-# because some platforms reject it and the runtime DB must live on the
-# platform-managed persistent volume instead.
+# Persistent storage is provided by the platform (Railway volume at /data).
 
 EXPOSE 8000
 
