@@ -13,6 +13,7 @@ Design notes:
 """
 
 import json
+import os
 import random
 import re
 import sqlite3
@@ -23,7 +24,8 @@ from app.config import DATA_DIR
 from app.db.product_seed import PRODUCT_SEED
 
 # Default database path (same file the Transaction Tracker reads).
-STORE_DB_PATH = str(DATA_DIR / "orders.db")
+# Overridable via STORE_DB_PATH for deployment (persistent volume mount).
+STORE_DB_PATH = os.getenv("STORE_DB_PATH", str(DATA_DIR / "orders.db"))
 
 # Columns that must exist on the orders table for the storefront flow.
 # customer_name already exists (used by Transaction Tracker) — everything else

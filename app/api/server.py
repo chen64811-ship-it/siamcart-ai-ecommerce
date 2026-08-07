@@ -143,7 +143,7 @@ _POLICY_INTENTS = {"RETURN_REFUND", "STORE_POLICY"}
 
 # ── Experiment Logger ────────────────────────────────────────────────
 
-DB_PATH = str(DATA_DIR / "orders.db")
+DB_PATH = os.getenv("STORE_DB_PATH", str(DATA_DIR / "orders.db"))
 EXPERIMENT_LOG = str(LOGS_DIR / "experiment.jsonl")
 
 

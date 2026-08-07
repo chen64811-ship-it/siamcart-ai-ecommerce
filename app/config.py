@@ -45,11 +45,14 @@ LLM_CONFIG = {
 # Embedding model for RAG (Phase 3+)
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
 
-# ChromaDB (Phase 3+)
-CHROMA_DB_DIR = str(BASE_DIR / "data" / "chroma")
+# ChromaDB (Phase 3+). Overridable for deployment (persistent volume path).
+CHROMA_DB_DIR = os.getenv("CHROMA_DIR", str(BASE_DIR / "data" / "chroma"))
+
+# Runtime SQLite database. Overridable for deployment (persistent volume).
+STORE_DB_PATH = os.getenv("STORE_DB_PATH", str(BASE_DIR / "data" / "orders.db"))
 
 # Database
-DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'data' / 'orders.db'}")
+DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{STORE_DB_PATH}")
 
 # Session
 SESSION_EXPIRE_MINUTES = 30

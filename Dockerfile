@@ -31,4 +31,6 @@ VOLUME ["/data"]
 
 EXPOSE 8000
 
-CMD ["python", "-m", "uvicorn", "app.api.server:app", "--host", "0.0.0.0", "--port", "8000"]
+# Listen on $PORT when provided by the platform (Railway/Render/Fly),
+# defaulting to 8000 locally.
+CMD ["sh", "-c", "python -m uvicorn app.api.server:app --host 0.0.0.0 --port ${PORT:-8000}"]
