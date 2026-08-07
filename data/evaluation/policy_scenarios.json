@@ -1,0 +1,545 @@
+[
+  {
+    "scenario_id": "POLICY-001",
+    "category": "policy",
+    "subcategory": "refund_processing",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "หลังจากส่งสินค้าคืนแล้ว ได้เงินคืนภายในกี่วันคะ",
+    "expected_intent": "RETURN_REFUND",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "refund"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "refund_processing_time=5-7 business days",
+      "refund_destination=original payment method"
+    ],
+    "notes": "source=refund_policy.md; section=Section 1: Refund Processing Timeline"
+  },
+  {
+    "scenario_id": "POLICY-002",
+    "category": "policy",
+    "subcategory": "refund_defective",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "สินค้ามีตำหนิ จะได้เงินคืนรวมค่าส่งไหมคะ",
+    "expected_intent": "RETURN_REFUND",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "refund"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "defective_refund=full refund including shipping costs",
+      "defective_notification=within 7 days of receipt"
+    ],
+    "notes": "source=refund_policy.md; section=Section 2: Full Refund — Defective or Incorrect Items"
+  },
+  {
+    "scenario_id": "POLICY-003",
+    "category": "policy",
+    "subcategory": "refund_change_of_mind",
+    "language": "th-en",
+    "input_type": "normal",
+    "user_message": "เปลี่ยนใจคืนสินค้า ได้ refund เต็มราคาไหม หรือมีค่าธรรมเนียม",
+    "expected_intent": "RETURN_REFUND",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "refund"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "change_of_mind_refund=product price only (shipping not included)",
+      "change_of_mind_fee=50 THB"
+    ],
+    "notes": "source=refund_policy.md; section=Section 3: Partial Refund — Change of Mind"
+  },
+  {
+    "scenario_id": "POLICY-004",
+    "category": "policy",
+    "subcategory": "refund_exclusions",
+    "language": "en",
+    "input_type": "normal",
+    "user_message": "What items are excluded from getting a refund?",
+    "expected_intent": "STORE_POLICY",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "refund"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "exclusion_damaged_by_customer=not refundable",
+      "exclusion_after_14_days=not refundable",
+      "exclusion_non_returnable=not refundable"
+    ],
+    "notes": "source=refund_policy.md; section=Section 4: Refund Exclusions"
+  },
+  {
+    "scenario_id": "POLICY-005",
+    "category": "policy",
+    "subcategory": "refund_notification",
+    "language": "th",
+    "input_type": "boundary",
+    "user_message": "คืนเงินเสร็จแล้วแจ้งทางไหน",
+    "expected_intent": "STORE_POLICY",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "refund"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "refund_notification=email",
+      "refund_status_label=Refunded"
+    ],
+    "notes": "source=refund_policy.md; section=Section 5: Refund Notification"
+  },
+  {
+    "scenario_id": "POLICY-006",
+    "category": "policy",
+    "subcategory": "refund_general",
+    "language": "th-en",
+    "input_type": "normal",
+    "user_message": "นโยบาย refund ของร้านเป็นยังไงบ้าง",
+    "expected_intent": "STORE_POLICY",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "refund"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "refund_processing_time=5-7 business days",
+      "refund_destination=original payment method"
+    ],
+    "notes": "source=refund_policy.md; section=Section 1: Refund Processing Timeline"
+  },
+  {
+    "scenario_id": "POLICY-007",
+    "category": "policy",
+    "subcategory": "return_window",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "สินค้าสามารถคืนได้ภายในกี่วันคะ ต้องมีสภาพยังไงบ้าง",
+    "expected_intent": "RETURN_REFUND",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "return"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "return_window=14 calendar days",
+      "return_condition=unused original packaging"
+    ],
+    "notes": "source=return_policy.md; section=Section 1: Standard Return Window"
+  },
+  {
+    "scenario_id": "POLICY-008",
+    "category": "policy",
+    "subcategory": "return_non_returnable",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "เครื่องสำอางที่ใช้แล้วคืนได้ไหมคะ แล้วชุดชั้นในล่ะ",
+    "expected_intent": "RETURN_REFUND",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "return"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "non_returnable=intimate apparel and swimwear",
+      "non_returnable=opened cosmetics and personal care products",
+      "non_returnable=opened food and beverage items"
+    ],
+    "notes": "source=return_policy.md; section=Section 2: Non-Returnable Items"
+  },
+  {
+    "scenario_id": "POLICY-009",
+    "category": "policy",
+    "subcategory": "return_fashion",
+    "language": "th-en",
+    "input_type": "normal",
+    "user_message": "เสื้อผ้าใส่ลองแล้วคืนได้มั้ยคะ ต้องมีป้ายติดอยู่ไหม",
+    "expected_intent": "RETURN_REFUND",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "return"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "fashion_return_window=14 days",
+      "fashion_condition=unworn unwashed with tags"
+    ],
+    "notes": "source=return_policy.md; section=Section 3: Fashion Items"
+  },
+  {
+    "scenario_id": "POLICY-010",
+    "category": "policy",
+    "subcategory": "return_initiate",
+    "language": "en",
+    "input_type": "boundary",
+    "user_message": "How to start a return?",
+    "expected_intent": "RETURN_REFUND",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "return"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "initiate_via=chat or email",
+      "support_email=support@siamcart.demo",
+      "response_time=24 business hours"
+    ],
+    "notes": "source=return_policy.md; section=Section 5: How to Initiate a Return"
+  },
+  {
+    "scenario_id": "POLICY-011",
+    "category": "policy",
+    "subcategory": "return_electronics",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "สินค้าอิเล็กทรอนิกส์คืนได้กี่วันคะ ต้องมีอะไรบ้าง",
+    "expected_intent": "RETURN_REFUND",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "return"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "electronics_return_window=7 calendar days",
+      "electronics_condition=no user damage all accessories included"
+    ],
+    "notes": "source=return_policy.md; section=Section 4: Electronics Return Window"
+  },
+  {
+    "scenario_id": "POLICY-012",
+    "category": "policy",
+    "subcategory": "return_conditions_general",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "อยากทราบเงื่อนไขการคืนสินค้าของร้านหน่อยครับ",
+    "expected_intent": "STORE_POLICY",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "return"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "return_window=14 calendar days",
+      "return_condition=unused original packaging"
+    ],
+    "notes": "source=return_policy.md; section=Section 1: Standard Return Window"
+  },
+  {
+    "scenario_id": "POLICY-013",
+    "category": "policy",
+    "subcategory": "exchange_eligibility",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "ขอเปลี่ยนสินค้าเป็นอย่างอื่นได้ไหมคะ ต้องแจ้งภายในกี่วัน",
+    "expected_intent": "RETURN_REFUND",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "exchange"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "exchange_window=14 calendar days",
+      "exchange_condition=unused no damage"
+    ],
+    "notes": "source=exchange_policy.md; section=Section 1: Exchange Eligibility"
+  },
+  {
+    "scenario_id": "POLICY-014",
+    "category": "policy",
+    "subcategory": "exchange_defective",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "สินค้ามีตำหนิจากโรงงาน เปลี่ยนให้ฟรีไหม ต้องแจ้งภายในกี่วัน",
+    "expected_intent": "RETURN_REFUND",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "exchange"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "defective_exchange=immediate no additional cost",
+      "defective_notification=within 7 days of receipt"
+    ],
+    "notes": "source=exchange_policy.md; section=Section 2: Defective Item Exchange"
+  },
+  {
+    "scenario_id": "POLICY-015",
+    "category": "policy",
+    "subcategory": "exchange_size_color",
+    "language": "th-en",
+    "input_type": "boundary",
+    "user_message": "เปลี่ยนไซส์หรือสีได้กี่วัน",
+    "expected_intent": "RETURN_REFUND",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "exchange"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "size_color_exchange_window=14 days",
+      "price_difference=pay or refund difference"
+    ],
+    "notes": "source=exchange_policy.md; section=Section 3: Size and Color Exchange"
+  },
+  {
+    "scenario_id": "POLICY-016",
+    "category": "policy",
+    "subcategory": "exchange_shipping",
+    "language": "th",
+    "input_type": "boundary",
+    "user_message": "เปลี่ยนสินค้าใครออกค่าส่ง",
+    "expected_intent": "RETURN_REFUND",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "exchange"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "defect_exchange_shipping=store covers both ways",
+      "change_of_mind_shipping=customer pays return store pays outbound"
+    ],
+    "notes": "source=exchange_policy.md; section=Section 4: Exchange Shipping"
+  },
+  {
+    "scenario_id": "POLICY-017",
+    "category": "policy",
+    "subcategory": "exchange_availability",
+    "language": "en",
+    "input_type": "normal",
+    "user_message": "What happens if the item I want to exchange for is out of stock?",
+    "expected_intent": "STORE_POLICY",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "exchange"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "exchange_subject_to=stock availability",
+      "out_of_stock=offer alternatives or refund"
+    ],
+    "notes": "source=exchange_policy.md; section=Section 5: Exchange Availability"
+  },
+  {
+    "scenario_id": "POLICY-018",
+    "category": "policy",
+    "subcategory": "exchange_general",
+    "language": "th",
+    "input_type": "abnormal",
+    "user_message": "เปลี่ยนสินค้าได้ป่าวคับ อยากเปลี่ยน",
+    "expected_intent": "RETURN_REFUND",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "exchange"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "exchange_window=14 calendar days",
+      "exchange_condition=unused no damage"
+    ],
+    "notes": "source=exchange_policy.md; section=Section 1: Exchange Eligibility"
+  },
+  {
+    "scenario_id": "POLICY-019",
+    "category": "policy",
+    "subcategory": "shipping_coverage",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "ร้านจัดส่งต่างประเทศหรือเปล่าคะ ส่งแค่ในไทยใช่ไหม",
+    "expected_intent": "STORE_POLICY",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "shipping"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "shipping_area=Thailand only",
+      "international_shipping=not available"
+    ],
+    "notes": "source=shipping_policy.md; section=Section 1: Domestic Shipping Coverage"
+  },
+  {
+    "scenario_id": "POLICY-020",
+    "category": "policy",
+    "subcategory": "shipping_free_threshold",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "สั่งซื้อเท่าไหร่ได้ส่งฟรีคะ ถ้าไม่ถึงคิดค่าส่งเท่าไหร่",
+    "expected_intent": "STORE_POLICY",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "shipping"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "free_shipping_threshold=500 THB",
+      "shipping_fee_below_threshold=50 THB flat"
+    ],
+    "notes": "source=shipping_policy.md; section=Section 2: Free Shipping Threshold"
+  },
+  {
+    "scenario_id": "POLICY-021",
+    "category": "policy",
+    "subcategory": "shipping_timeframes",
+    "language": "th-en",
+    "input_type": "normal",
+    "user_message": "ส่งของถึงกทม. กี่วันครับ ต่างจังหวัดนานกว่ารึเปล่า",
+    "expected_intent": "STORE_POLICY",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "shipping"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "delivery_bangkok=1-3 business days",
+      "delivery_provinces=2-5 business days",
+      "delivery_remote=3-7 business days"
+    ],
+    "notes": "source=shipping_policy.md; section=Section 3: Delivery Timeframes"
+  },
+  {
+    "scenario_id": "POLICY-022",
+    "category": "policy",
+    "subcategory": "shipping_delay",
+    "language": "th",
+    "input_type": "boundary",
+    "user_message": "ของส่งช้าได้ส่วนลดไหม",
+    "expected_intent": "STORE_POLICY",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "shipping"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "delay_compensation=50 THB coupon",
+      "delay_threshold=7 business days",
+      "delay_notification=within 14 days of order date"
+    ],
+    "notes": "source=shipping_policy.md; section=Section 4: Shipping Delay Handling"
+  },
+  {
+    "scenario_id": "POLICY-023",
+    "category": "policy",
+    "subcategory": "shipping_lost",
+    "language": "en",
+    "input_type": "normal",
+    "user_message": "What happens if my package is lost during shipping?",
+    "expected_intent": "STORE_POLICY",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "shipping"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "lost_notification=within 7 days of expected delivery date",
+      "lost_action=reship or full refund"
+    ],
+    "notes": "source=shipping_policy.md; section=Section 5: Lost Package Procedure"
+  },
+  {
+    "scenario_id": "POLICY-024",
+    "category": "policy",
+    "subcategory": "shipping_general",
+    "language": "th",
+    "input_type": "abnormal",
+    "user_message": "ส่งของไง อยากรู้",
+    "expected_intent": "STORE_POLICY",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "shipping"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "shipping_area=Thailand only",
+      "free_shipping_threshold=500 THB"
+    ],
+    "notes": "source=shipping_policy.md; section=Section 2: Free Shipping Threshold"
+  },
+  {
+    "scenario_id": "POLICY-025",
+    "category": "policy",
+    "subcategory": "payment_methods",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "ร้านรับชำระเงินผ่านช่องทางอะไรบ้างคะ",
+    "expected_intent": "STORE_POLICY",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "payment"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "accepted_methods=Bank Transfer, Credit/Debit Card (Visa Mastercard), PromptPay, COD"
+    ],
+    "notes": "source=payment_policy.md; section=Section 1: Accepted Payment Methods"
+  },
+  {
+    "scenario_id": "POLICY-026",
+    "category": "policy",
+    "subcategory": "payment_confirmation",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "โอนเงินแล้วใช้เวลากี่ชั่วโมงกว่าจะยืนยันคำสั่งซื้อคะ",
+    "expected_intent": "STORE_POLICY",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "payment"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "bank_transfer_confirmation=1-2 business hours",
+      "card_promptpay_confirmation=immediate"
+    ],
+    "notes": "source=payment_policy.md; section=Section 2: Payment Confirmation"
+  },
+  {
+    "scenario_id": "POLICY-027",
+    "category": "policy",
+    "subcategory": "payment_cod",
+    "language": "th-en",
+    "input_type": "boundary",
+    "user_message": "ค่าใช้จ่าย COD เท่าไหร่",
+    "expected_intent": "STORE_POLICY",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "payment"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "cod_fee=20 THB per order",
+      "cod_payment=cash to driver on delivery"
+    ],
+    "notes": "source=payment_policy.md; section=Section 3: Cash on Delivery (COD)"
+  },
+  {
+    "scenario_id": "POLICY-028",
+    "category": "policy",
+    "subcategory": "payment_failed",
+    "language": "th-en",
+    "input_type": "boundary",
+    "user_message": "จ่ายไม่สำเร็จ ระบบทำยังไง",
+    "expected_intent": "STORE_POLICY",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "payment"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "failed_payment_action=auto cancel within 24 hours",
+      "retry=place new order"
+    ],
+    "notes": "source=payment_policy.md; section=Section 4: Failed Payment Handling"
+  },
+  {
+    "scenario_id": "POLICY-029",
+    "category": "policy",
+    "subcategory": "payment_invoice",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "หลังจากชำระเงินแล้ว ใบเสร็จส่งทางไหนคะ",
+    "expected_intent": "STORE_POLICY",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "payment"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "receipt=sent to email after payment completion",
+      "tax_invoice=contact support@siamcart.demo"
+    ],
+    "notes": "source=payment_policy.md; section=Section 5: Invoice and Receipt"
+  },
+  {
+    "scenario_id": "POLICY-030",
+    "category": "policy",
+    "subcategory": "payment_general",
+    "language": "th-en",
+    "input_type": "abnormal",
+    "user_message": "จ่ายตังยังไงได้บ้าง รับอะไรบ้าง",
+    "expected_intent": "STORE_POLICY",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {"policy_type": "payment"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "accepted_methods=Bank Transfer, Credit/Debit Card (Visa Mastercard), PromptPay, COD"
+    ],
+    "notes": "source=payment_policy.md; section=Section 1: Accepted Payment Methods"
+  }
+]

@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <title>SiamCart — Shop Fashion, Electronics &amp; More in Thailand</title>
+    <meta name="description" content="SiamCart is a research prototype marketplace with AI customer support. Shop fashion, electronics, footwear and accessories with Thai &amp; English support.">
+    <link rel="stylesheet" href="/static/css/styles.css?v=store-sqlite-2">
+</head>
+<body>
+
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <!-- ══ 1. TOP PROMOTION BAR ══ -->
+    <div class="topbar">
+        <div class="container topbar-inner">
+            <span class="topbar-item">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M1 6h18v12H1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M19 9l4 3v6h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6" cy="18" r="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="16" cy="18" r="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+                Free shipping on qualifying Bangkok orders
+            </span>
+            <span class="topbar-item">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Secure demo checkout
+            </span>
+            <span class="topbar-item topbar-item-lang">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3 12h18M12 3c2.5 2.5 3.8 5.7 3.8 9S14.5 18.5 12 21c-2.5-2.5-3.8-5.7-3.8-9S9.5 5.5 12 3z" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+                Thai &amp; English support
+            </span>
+        </div>
+    </div>
+
+    <!-- ══ 2. STICKY MAIN HEADER ══ -->
+    <header class="site-header" id="siteHeader">
+        <div class="container header-inner">
+            <a href="#" class="logo" aria-label="SiamCart home">
+                <span class="logo-mark" aria-hidden="true">
+                    <svg viewBox="0 0 32 32"><path d="M16 2l12 6v10c0 6.5-5 11-12 13C9 29 4 24.5 4 18V8z" fill="currentColor"/><path d="M11 17l3.2 3.2L21 13" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <span class="logo-text">Siam<strong>Cart</strong></span>
+            </a>
+
+            <form class="search-bar" role="search" id="searchForm" autocomplete="off">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.8-3.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                <input type="search" id="searchInput" placeholder="Search products, categories…" aria-label="Search products" autocomplete="off">
+                <button type="submit" class="search-submit" aria-label="Submit search">Search</button>
+            </form>
+
+            <nav class="main-nav" id="mainNav" aria-label="Main navigation">
+                <a href="#products" data-nav="All Products">Home</a>
+                <a href="#products" data-nav="New">New Arrivals</a>
+                <a href="#products" data-nav="Fashion">Fashion</a>
+                <a href="#products" data-nav="Electronics">Electronics</a>
+                <a href="#products" data-nav="Bags &amp; Accessories">Accessories</a>
+                <a href="/orders/new" class="nav-create-order">Create Demo Order</a>
+            </nav>
+
+            <div class="header-actions">
+                <button class="icon-btn" id="accountBtn" aria-label="Account" title="Account">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4 21c1.5-4 4.6-6 8-6s6.5 2 8 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                </button>
+                <button class="icon-btn" id="ordersBtn" aria-label="Orders" title="Orders">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7l9-4 9 4v10l-9 4-9-4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M3 7l9 4 9-4M12 11v10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+                </button>
+                <button class="icon-btn cart-btn" id="cartToggle" aria-label="Open shopping cart">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2.5l2 12h11l2-8H7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9.5" cy="20" r="1.6" fill="currentColor"/><circle cx="17" cy="20" r="1.6" fill="currentColor"/></svg>
+                    <span class="cart-badge" id="cartBadge" hidden>0</span>
+                </button>
+                <button class="icon-btn menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+        </div>
+        <div class="mobile-nav" id="mobileNav" hidden></div>
+    </header>
+
+    <!-- ══ 3. HERO SECTION ══ -->
+    <section class="hero" aria-label="Welcome to SiamCart">
+        <div class="container hero-inner">
+            <div class="hero-copy">
+                <p class="hero-eyebrow">New Season · New Arrivals</p>
+                <h1>Everything you love, delivered across Thailand.</h1>
+                <p class="hero-sub">Discover fashion, electronics, footwear and accessories — backed by the SiamCart AI assistant for orders, payments and deliveries.</p>
+                <div class="hero-actions">
+                    <a href="#products" class="btn btn-primary" id="heroShopBtn">Shop New Arrivals</a>
+                    <button class="btn btn-secondary" id="heroAskAiBtn">
+                        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a8 8 0 00-8 8c0 1.8.6 3.5 1.6 4.9L4 20l4.2-1.4A8 8 0 1012 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 11h.01M12.5 11h.01M16 11h.01" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+                        Ask SiamCart AI
+                    </button>
+                </div>
+                <ul class="hero-trust">
+                    <li><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 12l2 2 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>100% demo-friendly</li>
+                    <li><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 12l2 2 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>AI support in Thai &amp; English</li>
+                    <li><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 12l2 2 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Fast Bangkok delivery</li>
+                </ul>
+            </div>
+            <div class="hero-visual">
+                <img src="/static/images/hero.jpg" alt="New arrivals on display at a modern SiamCart store" width="1400" height="934" fetchpriority="high">
+                <div class="hero-price-card">
+                    <span class="hero-price-label">Deal of the week</span>
+                    <strong>฿1,290</strong>
+                    <span class="hero-price-old">฿1,890</span>
+                    <button class="hero-price-cta" id="heroDealBtn">View deal</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <main id="main">
+        <!-- ══ 4. CATEGORY NAVIGATION ══ -->
+        <section class="categories" aria-label="Shop by category">
+            <div class="container">
+                <h2 class="section-title">Shop by Category</h2>
+                <div class="category-grid" id="categoryGrid"></div>
+            </div>
+        </section>
+
+        <!-- ══ 5 + 6. PRODUCT TOOLBAR & GRID ══ -->
+        <section class="products" id="products" aria-label="Products">
+            <div class="container">
+                <div class="product-toolbar">
+                    <p class="result-count" id="resultCount" aria-live="polite"></p>
+                    <span class="active-category" id="activeCategory">All Products</span>
+                    <div class="toolbar-controls">
+                        <label class="sort-label" for="sortSelect">Sort
+                            <select id="sortSelect">
+                                <option value="featured">Featured</option>
+                                <option value="price-asc">Price: Low to High</option>
+                                <option value="price-desc">Price: High to Low</option>
+                                <option value="newest">Newest</option>
+                            </select>
+                        </label>
+                        <div class="view-toggle" role="group" aria-label="View mode">
+                            <button class="view-btn active" id="viewGrid" aria-label="Grid view" aria-pressed="true">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="4" width="7" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="4" y="13" width="7" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="13" width="7" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+                            </button>
+                            <button class="view-btn" id="viewList" aria-label="List view" aria-pressed="false">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-grid" id="productGrid"></div>
+
+                <div class="empty-state" id="emptyState" hidden>
+                    <svg class="empty-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M20 20l-3.8-3.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                    <p>No products match your search.</p>
+                    <button class="btn btn-secondary" id="clearFiltersBtn">Clear filters</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══ 11. TRUST AND SERVICE ══ -->
+        <section class="trust" aria-label="Why shop with SiamCart">
+            <div class="container trust-grid">
+                <div class="trust-item">
+                    <span class="trust-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    <h3>Secure Demo Checkout</h3>
+                    <p>Simulated checkout with no real payment collected.</p>
+                </div>
+                <div class="trust-item">
+                    <span class="trust-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 6h18v12H1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M19 9l4 3v6h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6" cy="18" r="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="16" cy="18" r="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></span>
+                    <h3>Delivery Tracking</h3>
+                    <p>Ask the AI assistant where your order is at any time.</p>
+                </div>
+                <div class="trust-item">
+                    <span class="trust-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h11l5 5v11H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    <h3>Easy Return Guidance</h3>
+                    <p>Clear step-by-step guidance from our support team.</p>
+                </div>
+                <div class="trust-item">
+                    <span class="trust-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a8 8 0 00-8 8c0 1.8.6 3.5 1.6 4.9L4 20l4.2-1.4A8 8 0 1012 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
+                    <h3>AI Customer Support</h3>
+                    <p>Orders, payments, shipping, returns and policies — 24/7.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ══ 12. FOOTER ══ -->
+    <footer class="footer">
+        <div class="container footer-grid">
+            <div class="footer-brand">
+                <a href="#" class="logo logo-footer" aria-label="SiamCart home">
+                    <span class="logo-mark" aria-hidden="true">
+                        <svg viewBox="0 0 32 32"><path d="M16 2l12 6v10c0 6.5-5 11-12 13C9 29 4 24.5 4 18V8z" fill="currentColor"/><path d="M11 17l3.2 3.2L21 13" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                    <span class="logo-text">Siam<strong>Cart</strong></span>
+                </a>
+                <p>SiamCart is a research prototype marketplace demonstrating an LLM-powered multi-agent framework for automated customer support in Thai e-commerce.</p>
+                <p class="footer-contact">Contact: support@siamcart.demo</p>
+            </div>
+            <nav class="footer-col" aria-label="Shop links">
+                <h4>Shop</h4>
+                <a href="#products" data-nav="All Products">All Products</a>
+                <a href="#products" data-nav="New">New Arrivals</a>
+                <a href="#products" data-nav="Fashion">Fashion</a>
+                <a href="#products" data-nav="Electronics">Electronics</a>
+                <a href="#products" data-nav="Bags &amp; Accessories">Accessories</a>
+                <a href="/orders/new">Create Demo Order</a>
+            </nav>
+            <nav class="footer-col" aria-label="Customer support links">
+                <h4>Customer Support</h4>
+                <a href="#" data-chat-suggest="Where is order ORD-1001?">Track your order</a>
+                <a href="#" data-chat-suggest="What is the return policy?">Return policy</a>
+                <a href="#" data-chat-suggest="How long does a refund take?">Refund timing</a>
+                <a href="#" id="footerAskAi">Ask SiamCart AI</a>
+            </nav>
+            <nav class="footer-col" aria-label="Research prototype links">
+                <h4>Research Prototype</h4>
+                <a href="#" data-chat-suggest="Which agent handled my question?">System architecture</a>
+                <a href="#" data-chat-suggest="What policies does SiamCart follow?">Store policies</a>
+                <a href="#" data-chat-suggest="What research is SiamCart part of?">About the research</a>
+                <a href="#" data-chat-suggest="How does the multi-agent framework work?">Multi-agent framework</a>
+            </nav>
+        </div>
+        <div class="footer-bottom">
+            <div class="container footer-bottom-inner">
+                <p>© 2026 SiamCart. All rights reserved.</p>
+                <p class="footer-disclaimer">SiamCart is a research prototype. Products, orders, payments, and delivery information are simulated.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ══ FLOATING AI ASSISTANT ══ -->
+    <button class="chat-fab" id="chatFab" aria-label="Open SiamCart AI assistant">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a8 8 0 00-8 8c0 1.8.6 3.5 1.6 4.9L4 20l4.2-1.4A8 8 0 1012 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 11h.01M12.5 11h.01M16 11h.01" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        <span class="chat-fab-label">Ask SiamCart AI</span>
+        <span class="chat-fab-badge" id="chatUnread" hidden>1</span>
+    </button>
+
+    <section class="chat-panel" id="chatPanel" aria-label="SiamCart AI assistant" aria-hidden="true" hidden>
+        <header class="chat-header">
+            <div class="chat-header-id">
+                <span class="chat-avatar" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M12 3a8 8 0 00-8 8c0 1.8.6 3.5 1.6 4.9L4 20l4.2-1.4A8 8 0 1012 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 11h.01M12.5 11h.01M16 11h.01" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+                </span>
+                <div class="chat-header-text">
+                    <strong>Ask SiamCart AI</strong>
+                    <span class="chat-status"><i class="status-dot" aria-hidden="true"></i>Online · replies instantly</span>
+                </div>
+            </div>
+            <div class="chat-header-actions">
+                <button class="chat-icon-btn" id="chatResetBtn" aria-label="Reset chat" title="Reset chat">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v6h6M20 20v-6h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 10a8 8 0 0114-4l2 2M20 14a8 8 0 01-14 4l-2-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <button class="chat-icon-btn" id="chatMinBtn" aria-label="Minimize chat">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
+                <button class="chat-icon-btn" id="chatCloseBtn" aria-label="Close chat">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+        </header>
+
+        <div class="chat-order-context" id="chatOrderContext" hidden></div>
+
+        <div class="chat-product-context" id="chatProductContext" hidden></div>
+
+        <div class="chat-messages" id="chatMessages" role="log" aria-live="polite"></div>
+
+        <div class="chat-suggestions" id="chatSuggestions"></div>
+
+        <details class="research-details" id="researchDetails">
+            <summary>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 100 20 10 10 0 000-20z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v5M12 16.5h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                Research details
+                <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </summary>
+            <div class="research-grid" id="researchGrid">
+                <div class="research-row"><span>Intent</span><span id="rdIntent">—</span></div>
+                <div class="research-row"><span>Handler</span><span id="rdAgent">—</span></div>
+                <div class="research-row"><span>Order ID</span><span id="rdOrderId">—</span></div>
+                <div class="research-row"><span>Product ID</span><span id="rdProductId">—</span></div>
+                <div class="research-row"><span>Latency</span><span id="rdLatency">—</span></div>
+                <div class="research-row"><span>Response source</span><span id="rdSource">—</span></div>
+                <div class="research-row"><span>Database source</span><span id="rdDbSource">—</span></div>
+                <div class="research-row"><span>Demo extension</span><span id="rdDemoExt">—</span></div>
+                <div class="research-row"><span>Policy source</span><span id="rdPolicySource">—</span></div>
+                <div class="research-row"><span>Retrieved chunks</span><span id="rdChunks">—</span></div>
+                <div class="research-row"><span>Confidence</span><span id="rdConfidence">—</span></div>
+                <div class="research-row"><span>Response language</span><span id="rdResponseLang">—</span></div>
+                <div class="research-row"><span>Input language</span><span id="rdInputLang">—</span></div>
+            </div>
+        </details>
+
+        <div class="chat-composer">
+            <textarea id="chatInput" rows="1" placeholder="สอบถามเกี่ยวกับสินค้า คำสั่งซื้อ การชำระเงิน หรือการจัดส่ง..." aria-label="สอบถามผู้ช่วย AI ของ SiamCart"></textarea>
+            <button class="chat-send" id="sendBtn" aria-label="Send message">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5L21 3l-7 18-3.5-7.5L3 11.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+            </button>
+        </div>
+        <p class="chat-hint">Enter to send · Shift+Enter for a new line</p>
+    </section>
+
+    <!-- ══ PRODUCT DETAIL MODAL ══ -->
+    <div class="modal-backdrop" id="productModal" role="dialog" aria-modal="true" aria-labelledby="pmTitle" hidden>
+        <div class="modal product-modal">
+            <button class="modal-close" id="pmClose" aria-label="Close product details">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+            <div class="pm-body" id="pmBody"></div>
+        </div>
+    </div>
+
+    <!-- ══ CART DRAWER ══ -->
+    <div class="drawer-backdrop" id="cartBackdrop" hidden></div>
+    <aside class="cart-drawer" id="cartDrawer" role="dialog" aria-modal="true" aria-label="Shopping cart" aria-hidden="true" hidden>
+        <header class="drawer-header">
+            <h2>Your Cart <span class="drawer-count" id="cartDrawerCount"></span></h2>
+            <button class="icon-btn" id="cartClose" aria-label="Close cart">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+        </header>
+        <div class="drawer-body" id="cartItems"></div>
+        <footer class="drawer-footer" id="cartFooter" hidden>
+            <div class="cart-summary">
+                <div class="cart-line"><span>Subtotal</span><span id="cartSubtotal">฿0</span></div>
+                <div class="cart-line"><span>Estimated shipping</span><span id="cartShipping">—</span></div>
+                <div class="cart-line cart-grand"><span>Grand total</span><span id="cartGrandTotal">฿0</span></div>
+            </div>
+            <button class="btn btn-primary btn-block" id="checkoutBtn">Proceed to Checkout</button>
+            <button class="btn btn-ghost btn-block" id="continueShoppingBtn">Continue Shopping</button>
+        </footer>
+    </aside>
+
+    <!-- ══ CHECKOUT MODAL ══ -->
+    <div class="modal-backdrop" id="checkoutModal" role="dialog" aria-modal="true" aria-labelledby="coTitle" hidden>
+        <div class="modal checkout-modal">
+            <div class="checkout-view" id="checkoutView">
+                <header class="checkout-header">
+                    <h2 id="coTitle">Checkout</h2>
+                    <button class="modal-close" id="coClose" aria-label="Close checkout">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    </button>
+                </header>
+
+                <form id="checkoutForm" novalidate>
+                    <div class="checkout-body">
+                        <div class="co-submit-error" id="coSubmitError" hidden role="alert"></div>
+                        <section class="co-section">
+                            <h3>Customer information</h3>
+                            <div class="co-field"><label for="coName">Full name</label><input id="coName" type="text" autocomplete="name"><p class="co-error" data-for="coName"></p></div>
+                            <div class="co-row">
+                                <div class="co-field"><label for="coEmail">Email</label><input id="coEmail" type="email" autocomplete="email"><p class="co-error" data-for="coEmail"></p></div>
+                                <div class="co-field"><label for="coPhone">Phone</label><input id="coPhone" type="tel" autocomplete="tel"><p class="co-error" data-for="coPhone"></p></div>
+                            </div>
+                        </section>
+                        <section class="co-section">
+                            <h3>Delivery information</h3>
+                            <div class="co-field"><label for="coAddress">Address</label><input id="coAddress" type="text" autocomplete="street-address"><p class="co-error" data-for="coAddress"></p></div>
+                            <div class="co-row">
+                                <div class="co-field"><label for="coDistrict">District</label><input id="coDistrict" type="text"><p class="co-error" data-for="coDistrict"></p></div>
+                                <div class="co-field"><label for="coProvince">Province</label><input id="coProvince" type="text" autocomplete="address-level1"><p class="co-error" data-for="coProvince"></p></div>
+                                <div class="co-field"><label for="coPostal">Postal code</label><input id="coPostal" type="text" inputmode="numeric" maxlength="5" autocomplete="postal-code"><p class="co-error" data-for="coPostal"></p></div>
+                            </div>
+                        </section>
+                        <section class="co-section">
+                            <h3>Payment method</h3>
+                            <div class="co-payments" id="coPayments">
+                                <label class="co-pay"><input type="radio" name="payment" value="COD"><span><strong>Cash on Delivery</strong><small>Pay when your order arrives</small></span></label>
+                                <label class="co-pay"><input type="radio" name="payment" value="Bank Transfer"><span><strong>Bank Transfer</strong><small>Transfer to our demo bank account</small></span></label>
+                                <label class="co-pay"><input type="radio" name="payment" value="Card"><span><strong>Demo Card Payment</strong><small>Simulated payment — no card number required</small></span></label>
+                            </div>
+                            <p class="co-error" data-for="payment"></p>
+                        </section>
+                        <section class="co-section co-summary-section">
+                            <h3>Order summary</h3>
+                            <div id="coSummaryItems"></div>
+                            <div class="cart-summary">
+                                <div class="cart-line"><span>Subtotal</span><span id="coSubtotal">฿0</span></div>
+                                <div class="cart-line"><span>Shipping</span><span id="coShipping">฿0</span></div>
+                                <div class="cart-line cart-grand"><span>Total</span><span id="coTotal">฿0</span></div>
+                            </div>
+                        </section>
+                    </div>
+                    <footer class="checkout-footer">
+                        <button type="button" class="btn btn-ghost" id="coBackToCart">Back to Cart</button>
+                        <button type="submit" class="btn btn-primary" id="coPlaceOrder" disabled>Select a Payment Method</button>
+                    </footer>
+                </form>
+            </div>
+
+            <div class="confirmation-view" id="confirmationView" hidden>
+                <div class="confirm-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <h2 id="confirmTitle">Order created successfully</h2>
+                <p class="confirm-ref">Order reference <strong id="confirmRef">—</strong></p>
+                <p class="confirm-text" id="confirmText">Your order was created in the SiamCart demo database. Track it anytime through the AI assistant.</p>
+                <div class="confirm-details" id="confirmDetails"></div>
+                <div class="confirm-details confirm-items" id="confirmOrderItems" hidden></div>
+                <div class="confirm-actions">
+                    <button class="btn btn-primary" id="confirmAskAiBtn">Ask AI About This Order</button>
+                    <button class="btn btn-secondary" id="confirmViewOrders">View My Orders</button>
+                    <button class="btn btn-secondary" id="confirmViewBtn">View Order Details</button>
+                    <button class="btn btn-ghost" id="confirmDoneBtn">Continue Shopping</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ TOASTS ══ -->
+    <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="false"></div>
+
+    <script src="/static/js/store.js?v=store-sqlite-2"></script>
+    <script src="/static/js/chat.js?v=task8a-1"></script>
+</body>
+</html>

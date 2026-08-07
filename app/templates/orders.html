@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <title>My Orders — SiamCart</title>
+    <meta name="description" content="View your SiamCart demo orders, track payments and shipments, and ask the AI assistant about any order.">
+    <link rel="stylesheet" href="/static/css/styles.css?v=orders-5c3">
+</head>
+<body>
+
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <!-- ══ 1. TOP PROMOTION BAR ══ -->
+    <div class="topbar">
+        <div class="container topbar-inner">
+            <span class="topbar-item">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M1 6h18v12H1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M19 9l4 3v6h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6" cy="18" r="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="16" cy="18" r="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+                Free shipping on qualifying Bangkok orders
+            </span>
+            <span class="topbar-item">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Secure demo checkout
+            </span>
+            <span class="topbar-item topbar-item-lang">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3 12h18M12 3c2.5 2.5 3.8 5.7 3.8 9S14.5 18.5 12 21c-2.5-2.5-3.8-5.7-3.8-9S9.5 5.5 12 3z" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+                Thai &amp; English support
+            </span>
+        </div>
+    </div>
+
+    <!-- ══ 2. STICKY MAIN HEADER ══ -->
+    <header class="site-header">
+        <div class="container header-inner">
+            <a href="/" class="logo" aria-label="SiamCart home">
+                <span class="logo-mark" aria-hidden="true">
+                    <svg viewBox="0 0 32 32"><path d="M16 2l12 6v10c0 6.5-5 11-12 13C9 29 4 24.5 4 18V8z" fill="currentColor"/><path d="M11 17l3.2 3.2L21 13" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <span class="logo-text">Siam<strong>Cart</strong></span>
+            </a>
+
+            <nav class="main-nav" aria-label="Main navigation">
+                <a href="/">Back to Store</a>
+                <a href="/orders/new" class="nav-create-order">Create Demo Order</a>
+                <a href="/orders" class="nav-active" aria-current="page">My Orders</a>
+            </nav>
+
+            <div class="header-actions">
+                <button class="btn btn-secondary orders-ask-ai" id="ordersAskAiBtn" type="button">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a8 8 0 00-8 8c0 1.8.6 3.5 1.6 4.9L4 20l4.2-1.4A8 8 0 1012 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 11h.01M12.5 11h.01M16 11h.01" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+                    Ask SiamCart AI
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main id="main">
+        <section class="orders-page" aria-label="My orders">
+            <div class="container">
+
+                <div class="orders-head">
+                    <h1>My Orders</h1>
+                    <p class="orders-subtitle">Track your demo orders — payments, shipments and delivery details. Orders are simulated in the SiamCart research database.</p>
+                </div>
+
+                <!-- Search -->
+                <form class="orders-search-bar" id="ordersSearchForm" role="search" autocomplete="off">
+                    <label class="visually-hidden" for="ordersSearchType">Search by</label>
+                    <select id="ordersSearchType" aria-label="Search by">
+                        <option value="order_id">Order ID</option>
+                        <option value="email">Email</option>
+                        <option value="phone">Phone</option>
+                    </select>
+                    <label class="visually-hidden" for="ordersSearchInput">Search value</label>
+                    <input type="search" id="ordersSearchInput" placeholder="e.g. ORD-1010" aria-label="Search value">
+                    <button type="submit" class="btn btn-primary" id="ordersSearchBtn">Search Orders</button>
+                    <button type="button" class="btn btn-ghost" id="ordersLatestBtn">Show latest demo orders</button>
+                    <a href="/orders/new" class="btn btn-accent orders-create-link">Create Demo Order</a>
+                </form>
+
+                <!-- Research notice for the no-search demo listing -->
+                <div class="research-notice orders-demo-note" id="ordersDemoNote" hidden role="note">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 100 20 10 10 0 000-20z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v5M12 16.5h.01" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+                    <p><strong>Showing the latest synthetic demo orders.</strong> This research prototype lists recent demo orders when no search is entered. Search by order ID, email or phone to find your own.</p>
+                </div>
+
+                <div class="orders-results-head" id="ordersResultsHead" hidden>
+                    <p id="ordersResultsText" aria-live="polite"></p>
+                </div>
+
+                <!-- List container: skeleton / empty / error / cards -->
+                <div class="orders-list" id="ordersList" aria-live="polite"></div>
+
+            </div>
+        </section>
+    </main>
+
+    <!-- ══ FOOTER ══ -->
+    <footer class="footer">
+        <div class="container footer-grid">
+            <div class="footer-brand">
+                <a href="/" class="logo logo-footer" aria-label="SiamCart home">
+                    <span class="logo-mark" aria-hidden="true">
+                        <svg viewBox="0 0 32 32"><path d="M16 2l12 6v10c0 6.5-5 11-12 13C9 29 4 24.5 4 18V8z" fill="currentColor"/><path d="M11 17l3.2 3.2L21 13" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                    <span class="logo-text">Siam<strong>Cart</strong></span>
+                </a>
+                <p>SiamCart is a research prototype marketplace demonstrating an LLM-powered multi-agent framework for automated customer support in Thai e-commerce.</p>
+                <p class="footer-contact">Contact: support@siamcart.demo</p>
+            </div>
+            <nav class="footer-col" aria-label="Shop links">
+                <h4>Shop</h4>
+                <a href="/">Back to Store</a>
+                <a href="/orders/new">Create Demo Order</a>
+                <a href="/orders">My Orders</a>
+            </nav>
+            <nav class="footer-col" aria-label="Customer support links">
+                <h4>Customer Support</h4>
+                <a href="#" data-chat-suggest="Where is order ORD-1001?">Track your order</a>
+                <a href="#" data-chat-suggest="What is the return policy?">Return policy</a>
+                <a href="#" data-chat-suggest="How long does a refund take?">Refund timing</a>
+                <a href="#" id="ordersFooterAskAi">Ask SiamCart AI</a>
+            </nav>
+            <nav class="footer-col" aria-label="Research prototype links">
+                <h4>Research Prototype</h4>
+                <a href="#" data-chat-suggest="Which agent handled my question?">System architecture</a>
+                <a href="#" data-chat-suggest="What policies does SiamCart follow?">Store policies</a>
+                <a href="#" data-chat-suggest="What research is SiamCart part of?">About the research</a>
+                <a href="#" data-chat-suggest="How does the multi-agent framework work?">Multi-agent framework</a>
+            </nav>
+        </div>
+        <div class="footer-bottom">
+            <div class="container footer-bottom-inner">
+                <p>© 2026 SiamCart. All rights reserved.</p>
+                <p class="footer-disclaimer">SiamCart is a research prototype. Products, orders, payments, and delivery information are simulated.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ══ FLOATING AI ASSISTANT ══ -->
+    <button class="chat-fab" id="chatFab" aria-label="Open SiamCart AI assistant">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a8 8 0 00-8 8c0 1.8.6 3.5 1.6 4.9L4 20l4.2-1.4A8 8 0 1012 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 11h.01M12.5 11h.01M16 11h.01" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        <span class="chat-fab-label">Ask SiamCart AI</span>
+        <span class="chat-fab-badge" id="chatUnread" hidden>1</span>
+    </button>
+
+    <section class="chat-panel" id="chatPanel" aria-label="SiamCart AI assistant" aria-hidden="true" hidden>
+        <header class="chat-header">
+            <div class="chat-header-id">
+                <span class="chat-avatar" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M12 3a8 8 0 00-8 8c0 1.8.6 3.5 1.6 4.9L4 20l4.2-1.4A8 8 0 1012 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 11h.01M12.5 11h.01M16 11h.01" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+                </span>
+                <div class="chat-header-text">
+                    <strong>Ask SiamCart AI</strong>
+                    <span class="chat-status"><i class="status-dot" aria-hidden="true"></i>Online · replies instantly</span>
+                </div>
+            </div>
+            <div class="chat-header-actions">
+                <button class="chat-icon-btn" id="chatResetBtn" aria-label="Reset chat" title="Reset chat">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v6h6M20 20v-6h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 10a8 8 0 0114-4l2 2M20 14a8 8 0 01-14 4l-2-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <button class="chat-icon-btn" id="chatMinBtn" aria-label="Minimize chat">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
+                <button class="chat-icon-btn" id="chatCloseBtn" aria-label="Close chat">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+        </header>
+
+        <div class="chat-order-context" id="chatOrderContext" hidden></div>
+
+        <div class="chat-product-context" id="chatProductContext" hidden></div>
+
+        <div class="chat-messages" id="chatMessages" role="log" aria-live="polite"></div>
+
+        <div class="chat-suggestions" id="chatSuggestions"></div>
+
+        <details class="research-details" id="researchDetails">
+            <summary>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 100 20 10 10 0 000-20z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v5M12 16.5h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                Research details
+                <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </summary>
+            <div class="research-grid" id="researchGrid">
+                <div class="research-row"><span>Intent</span><span id="rdIntent">—</span></div>
+                <div class="research-row"><span>Agent</span><span id="rdAgent">—</span></div>
+                <div class="research-row"><span>Order ID</span><span id="rdOrderId">—</span></div>
+                <div class="research-row"><span>Latency</span><span id="rdLatency">—</span></div>
+                <div class="research-row"><span>Response source</span><span id="rdSource">—</span></div>
+                <div class="research-row"><span>Policy source</span><span id="rdPolicySource">—</span></div>
+                <div class="research-row"><span>Retrieved chunks</span><span id="rdChunks">—</span></div>
+                <div class="research-row"><span>Confidence</span><span id="rdConfidence">—</span></div>
+            </div>
+        </details>
+
+        <div class="chat-composer">
+            <textarea id="chatInput" rows="1" placeholder="Ask about orders, payments, shipping, returns…" aria-label="Message the SiamCart AI assistant"></textarea>
+            <button class="chat-send" id="sendBtn" aria-label="Send message">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5L21 3l-7 18-3.5-7.5L3 11.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+            </button>
+        </div>
+        <p class="chat-hint">Enter to send · Shift+Enter for a new line</p>
+    </section>
+
+    <!-- ══ ORDER DETAILS MODAL ══ -->
+    <div class="modal-backdrop" id="orderModal" role="dialog" aria-modal="true" aria-labelledby="odTitle" hidden>
+        <div class="modal order-modal">
+            <header class="order-modal-header">
+                <h2 id="odTitle">Order Details</h2>
+                <button class="modal-close" id="odClose" aria-label="Close order details">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
+            </header>
+            <div class="order-modal-body" id="odBody"></div>
+        </div>
+    </div>
+
+    <!-- ══ TOASTS ══ -->
+    <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="false"></div>
+
+    <script src="/static/js/chat.js?v=task8a-1"></script>
+    <script src="/static/js/orders.js?v=task8d-1"></script>
+</body>
+</html>

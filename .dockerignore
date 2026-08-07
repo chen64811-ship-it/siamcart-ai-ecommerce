@@ -1,0 +1,41 @@
+# Version control
+.git
+.gitignore
+
+# Local environment
+.venv
+venv
+.env
+.env.*
+
+# Python caches
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.coverage
+htmlcov
+
+# Logs and runtime data (created at runtime on persistent storage)
+logs
+*.log
+data/orders.db
+data/*.db
+data/**/*.db
+data/chroma
+data/customer_journey_audit
+data/demo_screenshots
+data/evaluation/results
+data/evaluation/figures
+
+# Thesis documents and evaluation artifacts
+thesis
+*.docx
+*.pdf
+*.zip
+
+# Temporary / OS files
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db

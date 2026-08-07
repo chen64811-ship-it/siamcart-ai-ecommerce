@@ -1,0 +1,59 @@
+# ── Secrets ────────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Python ─────────────────────────────────────────────────────────────
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+build/
+dist/
+
+# ── Test / coverage ────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+*.coverage
+
+# ── Logs ───────────────────────────────────────────────────────────────
+logs/
+*.log
+
+# ── Runtime databases ──────────────────────────────────────────────────
+data/orders.db
+data/*.db
+data/**/*.db
+data/chroma/
+
+# Backup / audit database copies (never commit customer runtime data)
+data/**/*backup*.db
+data/**/*_before*.db
+data/**/*_bak*.db
+
+# ── Generated / audit artifacts ────────────────────────────────────────
+data/customer_journey_audit/
+data/demo_screenshots/
+data/evaluation/results/
+data/evaluation/figures/
+data/orders/
+data/scenarios/
+
+# ── Thesis documents and evaluation outputs ────────────────────────────
+thesis/
+*.docx
+*.pdf
+*.zip
+
+# ── Temporary files ────────────────────────────────────────────────────
+*.tmp
+*.temp
+
+# ── OS / editor ────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

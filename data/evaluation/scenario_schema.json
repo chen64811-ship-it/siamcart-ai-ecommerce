@@ -1,0 +1,79 @@
+{
+  "description": "Shared schema for the Thai E-Commerce Multi-Agent thesis evaluation dataset",
+  "researcher": "XINGYUCHEN (2505310001) — Stamford International University, M.Sc. DIT",
+  "schema_version": "1.0",
+  "field_definitions": {
+    "scenario_id": {
+      "type": "string",
+      "format": "CATEGORY-NNN",
+      "description": "Unique sequential identifier per scenario group"
+    },
+    "category": {
+      "type": "string",
+      "enum": ["routing", "transaction", "policy", "clarification"],
+      "description": "Which agent or subsystem this scenario evaluates"
+    },
+    "subcategory": {
+      "type": "string",
+      "description": "Optional finer-grained grouping within the category"
+    },
+    "language": {
+      "type": "string",
+      "enum": ["th", "th-en", "en"],
+      "description": "Language of the user message: Thai only, Thai-English mixed, or English"
+    },
+    "input_type": {
+      "type": "string",
+      "enum": ["normal", "boundary", "abnormal"],
+      "description": "How typical the input is: normal = well-formed query, boundary = edge case / minimal / casual, abnormal = missing info / ambiguous / out-of-scope / gibberish"
+    },
+    "user_message": {
+      "type": "string",
+      "description": "The raw customer message as it would be typed in the chat UI"
+    },
+    "expected_intent": {
+      "type": "string",
+      "description": "The intent constant the router should return (must match app.agents.router exactly)"
+    },
+    "expected_agent": {
+      "type": "string",
+      "description": "The target_agent the router should dispatch to"
+    },
+    "expected_entities": {
+      "type": "object",
+      "description": "Entities the router should extract from the message (e.g. order_id)",
+      "additionalProperties": true
+    },
+    "requires_clarification": {
+      "type": "boolean",
+      "description": "Whether the router should flag this message as needing clarification"
+    },
+    "simulated_human_review": {
+      "type": "boolean",
+      "description": "Whether the router should flag this message for human review (OUT_OF_SCOPE)"
+    },
+    "expected_answer_facts": {
+      "type": "array",
+      "items": {},
+      "description": "Specific facts the downstream agent's answer should contain. May be empty for routing-only tests."
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional context about what this scenario tests"
+    }
+  },
+  "required_fields": [
+    "scenario_id",
+    "category",
+    "language",
+    "input_type",
+    "user_message",
+    "expected_intent",
+    "expected_agent",
+    "expected_entities",
+    "requires_clarification",
+    "simulated_human_review",
+    "expected_answer_facts",
+    "notes"
+  ]
+}

@@ -1,0 +1,542 @@
+[
+  {
+    "scenario_id": "CLARIFY-001",
+    "category": "clarification",
+    "subcategory": "missing_order_id",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "อยากทราบสถานะคำสั่งซื้อหน่อยครับ",
+    "expected_intent": "ORDER_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {},
+    "requires_clarification": true,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "missing_entity=order_id",
+      "expected_action=request_clarification"
+    ],
+    "notes": "ORDER_STATUS detected via keyword 'status' but no order ID provided"
+  },
+  {
+    "scenario_id": "CLARIFY-002",
+    "category": "clarification",
+    "subcategory": "missing_order_id",
+    "language": "th",
+    "input_type": "boundary",
+    "user_message": "ถึงไหนแล้ว",
+    "expected_intent": "ORDER_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {},
+    "requires_clarification": true,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "missing_entity=order_id",
+      "expected_action=request_clarification"
+    ],
+    "notes": "Very short ORDER_STATUS query without order ID, boundary minimal input"
+  },
+  {
+    "scenario_id": "CLARIFY-003",
+    "category": "clarification",
+    "subcategory": "missing_order_id",
+    "language": "th-en",
+    "input_type": "normal",
+    "user_message": "order status อะไรแล้ว",
+    "expected_intent": "ORDER_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {},
+    "requires_clarification": true,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "missing_entity=order_id",
+      "expected_action=request_clarification"
+    ],
+    "notes": "Mixed Thai-English ORDER_STATUS query, no order ID"
+  },
+  {
+    "scenario_id": "CLARIFY-004",
+    "category": "clarification",
+    "subcategory": "missing_order_id",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "ชำระเงินแล้วหรือยังคะ",
+    "expected_intent": "PAYMENT_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {},
+    "requires_clarification": true,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "missing_entity=order_id",
+      "expected_action=request_clarification"
+    ],
+    "notes": "PAYMENT_STATUS query without order ID"
+  },
+  {
+    "scenario_id": "CLARIFY-005",
+    "category": "clarification",
+    "subcategory": "missing_order_id",
+    "language": "th",
+    "input_type": "boundary",
+    "user_message": "จ่ายยัง",
+    "expected_intent": "PAYMENT_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {},
+    "requires_clarification": true,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "missing_entity=order_id",
+      "expected_action=request_clarification"
+    ],
+    "notes": "Short PAYMENT_STATUS query, boundary minimal form, no order ID"
+  },
+  {
+    "scenario_id": "CLARIFY-006",
+    "category": "clarification",
+    "subcategory": "missing_order_id",
+    "language": "th-en",
+    "input_type": "normal",
+    "user_message": "payment แล้วหรือยัง",
+    "expected_intent": "PAYMENT_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {},
+    "requires_clarification": true,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "missing_entity=order_id",
+      "expected_action=request_clarification"
+    ],
+    "notes": "Mixed Thai-English PAYMENT_STATUS query, no order ID"
+  },
+  {
+    "scenario_id": "CLARIFY-007",
+    "category": "clarification",
+    "subcategory": "missing_order_id",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "สถานะการจัดส่งเป็นยังไงบ้างคะ",
+    "expected_intent": "SHIPMENT_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {},
+    "requires_clarification": true,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "missing_entity=order_id",
+      "expected_action=request_clarification"
+    ],
+    "notes": "SHIPMENT_STATUS query, polite Thai, no order ID"
+  },
+  {
+    "scenario_id": "CLARIFY-008",
+    "category": "clarification",
+    "subcategory": "missing_order_id",
+    "language": "th",
+    "input_type": "boundary",
+    "user_message": "ส่งของหรือยัง",
+    "expected_intent": "SHIPMENT_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {},
+    "requires_clarification": true,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "missing_entity=order_id",
+      "expected_action=request_clarification"
+    ],
+    "notes": "Short SHIPMENT_STATUS query, boundary form, no order ID"
+  },
+  {
+    "scenario_id": "CLARIFY-009",
+    "category": "clarification",
+    "subcategory": "missing_order_id",
+    "language": "en",
+    "input_type": "normal",
+    "user_message": "What is the shipment status?",
+    "expected_intent": "SHIPMENT_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {},
+    "requires_clarification": true,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "missing_entity=order_id",
+      "expected_action=request_clarification"
+    ],
+    "notes": "English SHIPMENT_STATUS query, no order ID"
+  },
+  {
+    "scenario_id": "CLARIFY-010",
+    "category": "clarification",
+    "subcategory": "missing_order_id",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "ขอหมายเลขพัสดุหน่อยค่ะ",
+    "expected_intent": "TRACKING_NUMBER",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {},
+    "requires_clarification": true,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "missing_entity=order_id",
+      "expected_action=request_clarification"
+    ],
+    "notes": "TRACKING_NUMBER request, polite Thai, no order ID"
+  },
+  {
+    "scenario_id": "CLARIFY-011",
+    "category": "clarification",
+    "subcategory": "missing_order_id",
+    "language": "th-en",
+    "input_type": "boundary",
+    "user_message": "tracking number หน่อย",
+    "expected_intent": "TRACKING_NUMBER",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {},
+    "requires_clarification": true,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "missing_entity=order_id",
+      "expected_action=request_clarification"
+    ],
+    "notes": "Short mixed TRACKING_NUMBER request, boundary form, no order ID"
+  },
+  {
+    "scenario_id": "CLARIFY-012",
+    "category": "clarification",
+    "subcategory": "missing_order_id",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "เลขติดตามพัสดุอะไรคะ",
+    "expected_intent": "TRACKING_NUMBER",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {},
+    "requires_clarification": true,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "missing_entity=order_id",
+      "expected_action=request_clarification"
+    ],
+    "notes": "Polite TRACKING_NUMBER query, requires order ID clarification"
+  },
+  {
+    "scenario_id": "CLARIFY-013",
+    "category": "clarification",
+    "subcategory": "underspecified_policy",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "อยากทราบนโยบายของร้านหน่อยครับ",
+    "expected_intent": "STORE_POLICY",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {},
+    "requires_clarification": true,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "missing_entity=policy_type",
+      "expected_action=request_clarification"
+    ],
+    "notes": "General policy question, STORE_POLICY detected but too vague"
+  },
+  {
+    "scenario_id": "CLARIFY-014",
+    "category": "clarification",
+    "subcategory": "underspecified_policy",
+    "language": "th",
+    "input_type": "boundary",
+    "user_message": "มีเงื่อนไขอะไรบ้าง",
+    "expected_intent": "STORE_POLICY",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {},
+    "requires_clarification": true,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "missing_entity=policy_type",
+      "expected_action=request_clarification"
+    ],
+    "notes": "Vague policy question, 'conditions' triggers STORE_POLICY, no specific type"
+  },
+  {
+    "scenario_id": "CLARIFY-015",
+    "category": "clarification",
+    "subcategory": "underspecified_policy",
+    "language": "th-en",
+    "input_type": "normal",
+    "user_message": "policy ของร้านเป็นยังไงบ้าง",
+    "expected_intent": "STORE_POLICY",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {},
+    "requires_clarification": true,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "missing_entity=policy_type",
+      "expected_action=request_clarification"
+    ],
+    "notes": "Mixed Thai-English general policy query, underspecified"
+  },
+  {
+    "scenario_id": "CLARIFY-016",
+    "category": "clarification",
+    "subcategory": "underspecified_policy",
+    "language": "en",
+    "input_type": "boundary",
+    "user_message": "What are your store conditions?",
+    "expected_intent": "STORE_POLICY",
+    "expected_agent": "store_policy_evaluator",
+    "expected_entities": {},
+    "requires_clarification": true,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "missing_entity=policy_type",
+      "expected_action=request_clarification"
+    ],
+    "notes": "English store-conditions query, underspecified policy type"
+  },
+  {
+    "scenario_id": "CLARIFY-017",
+    "category": "clarification",
+    "subcategory": "ambiguous_multi_intent",
+    "language": "th",
+    "input_type": "boundary",
+    "user_message": "ORD-1001 ขอเปลี่ยนที่อยู่จัดส่งแล้วก็เช็คสถานะด้วย",
+    "expected_intent": "OUT_OF_SCOPE",
+    "expected_agent": "simulated_human_review",
+    "expected_entities": {"order_id": "ORD-1001"},
+    "requires_clarification": false,
+    "simulated_human_review": true,
+    "expected_answer_facts": [
+      "expected_action=simulated_human_review",
+      "escalation_reason=ambiguous_multi_intent"
+    ],
+    "notes": "Combines change-address with status check, OUT_OF_SCOPE triggered"
+  },
+  {
+    "scenario_id": "CLARIFY-018",
+    "category": "clarification",
+    "subcategory": "ambiguous_multi_intent",
+    "language": "th",
+    "input_type": "boundary",
+    "user_message": "ORD-1004 ขอเปลี่ยนเป็นสีอื่นแล้วเปลี่ยนที่อยู่จัดส่ง",
+    "expected_intent": "OUT_OF_SCOPE",
+    "expected_agent": "simulated_human_review",
+    "expected_entities": {"order_id": "ORD-1004"},
+    "requires_clarification": false,
+    "simulated_human_review": true,
+    "expected_answer_facts": [
+      "expected_action=simulated_human_review",
+      "escalation_reason=ambiguous_multi_intent"
+    ],
+    "notes": "Exchange plus address change, OUT_OF_SCOPE triggered"
+  },
+  {
+    "scenario_id": "CLARIFY-019",
+    "category": "clarification",
+    "subcategory": "ambiguous_multi_intent",
+    "language": "th-en",
+    "input_type": "abnormal",
+    "user_message": "ORD-1003 cancel order and place new one please",
+    "expected_intent": "OUT_OF_SCOPE",
+    "expected_agent": "simulated_human_review",
+    "expected_entities": {"order_id": "ORD-1003"},
+    "requires_clarification": false,
+    "simulated_human_review": true,
+    "expected_answer_facts": [
+      "expected_action=simulated_human_review",
+      "escalation_reason=ambiguous_multi_intent"
+    ],
+    "notes": "Cancel-and-reorder combined request, escalated to human review"
+  },
+  {
+    "scenario_id": "CLARIFY-020",
+    "category": "clarification",
+    "subcategory": "ambiguous_multi_intent",
+    "language": "en",
+    "input_type": "abnormal",
+    "user_message": "Change delivery address and check tracking for ORD-1001",
+    "expected_intent": "OUT_OF_SCOPE",
+    "expected_agent": "simulated_human_review",
+    "expected_entities": {"order_id": "ORD-1001"},
+    "requires_clarification": false,
+    "simulated_human_review": true,
+    "expected_answer_facts": [
+      "expected_action=simulated_human_review",
+      "escalation_reason=ambiguous_multi_intent"
+    ],
+    "notes": "English multi-intent, change-address triggers OUT_OF_SCOPE"
+  },
+  {
+    "scenario_id": "CLARIFY-021",
+    "category": "clarification",
+    "subcategory": "unsupported_request",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "ขอเปลี่ยนที่อยู่จัดส่งหน่อยครับ",
+    "expected_intent": "OUT_OF_SCOPE",
+    "expected_agent": "simulated_human_review",
+    "expected_entities": {},
+    "requires_clarification": false,
+    "simulated_human_review": true,
+    "expected_answer_facts": [
+      "expected_action=simulated_human_review",
+      "escalation_reason=unsupported_request"
+    ],
+    "notes": "Change-address request, outside automated system capability"
+  },
+  {
+    "scenario_id": "CLARIFY-022",
+    "category": "clarification",
+    "subcategory": "unsupported_request",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "ไม่ได้รับของ ยกเลิกคำสั่งซื้อ",
+    "expected_intent": "OUT_OF_SCOPE",
+    "expected_agent": "simulated_human_review",
+    "expected_entities": {},
+    "requires_clarification": false,
+    "simulated_human_review": true,
+    "expected_answer_facts": [
+      "expected_action=simulated_human_review",
+      "escalation_reason=unsupported_request"
+    ],
+    "notes": "Cancel-order request, cannot be processed by automated system"
+  },
+  {
+    "scenario_id": "CLARIFY-023",
+    "category": "clarification",
+    "subcategory": "unsupported_request",
+    "language": "th-en",
+    "input_type": "abnormal",
+    "user_message": "ORD-1002 cancel pls",
+    "expected_intent": "OUT_OF_SCOPE",
+    "expected_agent": "simulated_human_review",
+    "expected_entities": {"order_id": "ORD-1002"},
+    "requires_clarification": false,
+    "simulated_human_review": true,
+    "expected_answer_facts": [
+      "expected_action=simulated_human_review",
+      "escalation_reason=unsupported_request"
+    ],
+    "notes": "Short cancel request with order ID, escalated to human review"
+  },
+  {
+    "scenario_id": "CLARIFY-024",
+    "category": "clarification",
+    "subcategory": "unsupported_request",
+    "language": "th",
+    "input_type": "boundary",
+    "user_message": "edit order หน่อยครับ",
+    "expected_intent": "OUT_OF_SCOPE",
+    "expected_agent": "simulated_human_review",
+    "expected_entities": {},
+    "requires_clarification": false,
+    "simulated_human_review": true,
+    "expected_answer_facts": [
+      "expected_action=simulated_human_review",
+      "escalation_reason=unsupported_request"
+    ],
+    "notes": "Edit-order request, outside automated support capability"
+  },
+  {
+    "scenario_id": "CLARIFY-025",
+    "category": "clarification",
+    "subcategory": "unsupported_request",
+    "language": "en",
+    "input_type": "abnormal",
+    "user_message": "Make a payment for order ORD-1003",
+    "expected_intent": "OUT_OF_SCOPE",
+    "expected_agent": "simulated_human_review",
+    "expected_entities": {"order_id": "ORD-1003"},
+    "requires_clarification": false,
+    "simulated_human_review": true,
+    "expected_answer_facts": [
+      "expected_action=simulated_human_review",
+      "escalation_reason=unsupported_request"
+    ],
+    "notes": "Payment-action request, system only checks status not process payments"
+  },
+  {
+    "scenario_id": "CLARIFY-026",
+    "category": "clarification",
+    "subcategory": "unsupported_request",
+    "language": "th",
+    "input_type": "boundary",
+    "user_message": "process refund ให้หน่อย",
+    "expected_intent": "OUT_OF_SCOPE",
+    "expected_agent": "simulated_human_review",
+    "expected_entities": {},
+    "requires_clarification": false,
+    "simulated_human_review": true,
+    "expected_answer_facts": [
+      "expected_action=simulated_human_review",
+      "escalation_reason=unsupported_request"
+    ],
+    "notes": "Refund-action request, system explains policy does not execute refunds"
+  },
+  {
+    "scenario_id": "CLARIFY-027",
+    "category": "clarification",
+    "subcategory": "abnormal_input",
+    "language": "th",
+    "input_type": "abnormal",
+    "user_message": "อือ",
+    "expected_intent": "UNKNOWN",
+    "expected_agent": "clarification_handler",
+    "expected_entities": {},
+    "requires_clarification": true,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "expected_action=request_clarification",
+      "input_quality=insufficient"
+    ],
+    "notes": "Very short meaningless Thai syllable, no match, classified UNKNOWN"
+  },
+  {
+    "scenario_id": "CLARIFY-028",
+    "category": "clarification",
+    "subcategory": "abnormal_input",
+    "language": "th",
+    "input_type": "abnormal",
+    "user_message": "???",
+    "expected_intent": "UNKNOWN",
+    "expected_agent": "clarification_handler",
+    "expected_entities": {},
+    "requires_clarification": true,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "expected_action=request_clarification",
+      "input_quality=insufficient"
+    ],
+    "notes": "Punctuation-only message, classified UNKNOWN"
+  },
+  {
+    "scenario_id": "CLARIFY-029",
+    "category": "clarification",
+    "subcategory": "abnormal_input",
+    "language": "th-en",
+    "input_type": "abnormal",
+    "user_message": "hElP mE หน่อย",
+    "expected_intent": "UNKNOWN",
+    "expected_agent": "clarification_handler",
+    "expected_entities": {},
+    "requires_clarification": true,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "expected_action=request_clarification",
+      "input_quality=insufficient"
+    ],
+    "notes": "Mixed-case help request, keyword not in any pattern list, classified UNKNOWN"
+  },
+  {
+    "scenario_id": "CLARIFY-030",
+    "category": "clarification",
+    "subcategory": "abnormal_input",
+    "language": "th-en",
+    "input_type": "abnormal",
+    "user_message": "a s d f  อะไรดี",
+    "expected_intent": "UNKNOWN",
+    "expected_agent": "clarification_handler",
+    "expected_entities": {},
+    "requires_clarification": true,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "expected_action=request_clarification",
+      "input_quality=insufficient"
+    ],
+    "notes": "Keyboard-mash with Thai, no keyword match, classified UNKNOWN"
+  }
+]

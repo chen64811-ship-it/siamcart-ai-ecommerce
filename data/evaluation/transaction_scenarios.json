@@ -1,0 +1,570 @@
+[
+  {
+    "scenario_id": "TRANS-001",
+    "category": "transaction",
+    "subcategory": "order_status",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "ORD-1001 ตอนนี้สถานะอะไรแล้วคะ",
+    "expected_intent": "ORDER_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-1001"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-1001",
+      "order_status=shipped",
+      "payment_status=paid"
+    ],
+    "notes": "Standard order status query for ORD-1001 — shipped and paid"
+  },
+  {
+    "scenario_id": "TRANS-002",
+    "category": "transaction",
+    "subcategory": "order_status",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "อยากอัพเดท ORD-1002 หน่อยครับ ตอนนี้ถึงไหนแล้ว",
+    "expected_intent": "ORDER_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-1002"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-1002",
+      "order_status=processing",
+      "payment_status=paid"
+    ],
+    "notes": "Polite update request with 'อัพเดท' keyword, ORD-1002 is processing"
+  },
+  {
+    "scenario_id": "TRANS-003",
+    "category": "transaction",
+    "subcategory": "order_status",
+    "language": "th",
+    "input_type": "boundary",
+    "user_message": "ord-1005 status",
+    "expected_intent": "ORDER_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-1005"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-1005",
+      "order_status=return_requested",
+      "payment_status=paid"
+    ],
+    "notes": "Minimal lowercase order ID with bare 'status' keyword — boundary edge case, ORD-1005 has return_requested status"
+  },
+  {
+    "scenario_id": "TRANS-004",
+    "category": "transaction",
+    "subcategory": "order_status",
+    "language": "th-en",
+    "input_type": "normal",
+    "user_message": "status ของ ORD-1003 เป็นยังไงบ้าง",
+    "expected_intent": "ORDER_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-1003"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-1003",
+      "order_status=delivered",
+      "payment_status=paid"
+    ],
+    "notes": "Mixed Thai-English status check for ORD-1003 — delivered order"
+  },
+  {
+    "scenario_id": "TRANS-005",
+    "category": "transaction",
+    "subcategory": "order_status",
+    "language": "th-en",
+    "input_type": "normal",
+    "user_message": "order ORD-1004 update หน่อยครับ",
+    "expected_intent": "ORDER_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-1004"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-1004",
+      "order_status=pending",
+      "payment_status=unpaid"
+    ],
+    "notes": "Casual mixed-language update request for ORD-1004 — pending and unpaid"
+  },
+  {
+    "scenario_id": "TRANS-006",
+    "category": "transaction",
+    "subcategory": "order_status",
+    "language": "en",
+    "input_type": "normal",
+    "user_message": "What is the current status of order ORD-1001?",
+    "expected_intent": "ORDER_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-1001"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-1001",
+      "order_status=shipped",
+      "payment_status=paid"
+    ],
+    "notes": "Full English order status query for ORD-1001 — 'status' keyword"
+  },
+  {
+    "scenario_id": "TRANS-007",
+    "category": "transaction",
+    "subcategory": "order_status",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "ORD-1002 ไปถึงไหนแล้วคะ ถึงไทยหรือยัง",
+    "expected_intent": "ORDER_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-1002"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-1002",
+      "order_status=processing",
+      "payment_status=paid"
+    ],
+    "notes": "Conversational order status with 'ไปถึงไหนแล้ว' — ORD-1002 is still processing"
+  },
+  {
+    "scenario_id": "TRANS-008",
+    "category": "transaction",
+    "subcategory": "order_status",
+    "language": "th",
+    "input_type": "abnormal",
+    "user_message": "ORD-9999 ถึงไหนแล้วครับ",
+    "expected_intent": "ORDER_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-9999"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-9999",
+      "order_not_found=true"
+    ],
+    "notes": "Unknown order ID ORD-9999 — tests correct order-not-found response for ORDER_STATUS"
+  },
+  {
+    "scenario_id": "TRANS-009",
+    "category": "transaction",
+    "subcategory": "payment_status",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "ORD-1001 ชำระเงินแล้วหรือยังคะ",
+    "expected_intent": "PAYMENT_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-1001"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-1001",
+      "payment_status=paid"
+    ],
+    "notes": "Standard payment-status query for ORD-1001 — already paid"
+  },
+  {
+    "scenario_id": "TRANS-010",
+    "category": "transaction",
+    "subcategory": "payment_status",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "ORD-1004 จ่ายเงินแล้วหรือยังคะ ยังไม่ได้จ่ายเลย",
+    "expected_intent": "PAYMENT_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-1004"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-1004",
+      "payment_status=unpaid"
+    ],
+    "notes": "Payment check for ORD-1004 — tests the unpaid edge case, customer expresses concern"
+  },
+  {
+    "scenario_id": "TRANS-011",
+    "category": "transaction",
+    "subcategory": "payment_status",
+    "language": "th-en",
+    "input_type": "normal",
+    "user_message": "ORD-1002 payment แล้วหรือยังครับ",
+    "expected_intent": "PAYMENT_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-1002"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-1002",
+      "payment_status=paid"
+    ],
+    "notes": "Mixed Thai-English payment query for ORD-1002 — 'payment' keyword"
+  },
+  {
+    "scenario_id": "TRANS-012",
+    "category": "transaction",
+    "subcategory": "payment_status",
+    "language": "th-en",
+    "input_type": "normal",
+    "user_message": "ORD-1005 จ่ายเงินแล้วรึยังคะ",
+    "expected_intent": "PAYMENT_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-1005"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-1005",
+      "payment_status=paid"
+    ],
+    "notes": "Casual payment check for ORD-1005 with 'จ่ายเงินแล้วรึยัง' — paid despite return request"
+  },
+  {
+    "scenario_id": "TRANS-013",
+    "category": "transaction",
+    "subcategory": "payment_status",
+    "language": "en",
+    "input_type": "normal",
+    "user_message": "Has ORD-1003 been paid yet?",
+    "expected_intent": "PAYMENT_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-1003"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-1003",
+      "payment_status=paid"
+    ],
+    "notes": "Full English payment check — 'paid yet' keyword, ORD-1003 is paid"
+  },
+  {
+    "scenario_id": "TRANS-014",
+    "category": "transaction",
+    "subcategory": "payment_status",
+    "language": "th",
+    "input_type": "boundary",
+    "user_message": "ORD-9996 จ่ายหรือยัง",
+    "expected_intent": "PAYMENT_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-9996"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-9996",
+      "order_not_found=true"
+    ],
+    "notes": "Unknown order ORD-9996 — very short payment query, tests boundary form"
+  },
+  {
+    "scenario_id": "TRANS-015",
+    "category": "transaction",
+    "subcategory": "payment_status",
+    "language": "th",
+    "input_type": "boundary",
+    "user_message": "ORD-9997 ชำระยังครับ  เช็คให้หน่อย",
+    "expected_intent": "PAYMENT_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-9997"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-9997",
+      "order_not_found=true"
+    ],
+    "notes": "Unknown order ORD-9997 — double space before second clause, tests extra whitespace handling"
+  },
+  {
+    "scenario_id": "TRANS-016",
+    "category": "transaction",
+    "subcategory": "shipment_status",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "ORD-1001 จัดส่งถึงไหนแล้วคะ",
+    "expected_intent": "SHIPMENT_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-1001"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-1001",
+      "shipment_status=in_transit",
+      "shipping_provider=Flash Express",
+      "estimated_delivery_date=2026-07-14"
+    ],
+    "notes": "Standard shipment-status query for ORD-1001 — in transit via Flash Express, ETA 2026-07-14"
+  },
+  {
+    "scenario_id": "TRANS-017",
+    "category": "transaction",
+    "subcategory": "shipment_status",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "ORD-1002 สถานะการจัดส่งเป็นยังไงบ้างคะ",
+    "expected_intent": "SHIPMENT_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-1002"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-1002",
+      "shipment_status=pending_pickup",
+      "shipping_provider=Kerry Express",
+      "estimated_delivery_date=2026-07-16"
+    ],
+    "notes": "Full Thai shipment query with 'สถานะการจัดส่ง' — ORD-1002 is pending pickup via Kerry"
+  },
+  {
+    "scenario_id": "TRANS-018",
+    "category": "transaction",
+    "subcategory": "shipment_status",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "ORD-1003 ได้รับของหรือยังคะ ส่งถึงยัง",
+    "expected_intent": "SHIPMENT_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-1003"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-1003",
+      "shipment_status=delivered",
+      "shipping_provider=J&T Express",
+      "estimated_delivery_date=2026-07-05"
+    ],
+    "notes": "Delivery check for ORD-1003 — 'ได้รับของหรือยัง' matches SHIPMENT_STATUS, already delivered"
+  },
+  {
+    "scenario_id": "TRANS-019",
+    "category": "transaction",
+    "subcategory": "shipment_status",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "ORD-1004 จัดส่งหรือยังคะ รอนานแล้ว",
+    "expected_intent": "SHIPMENT_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-1004"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-1004",
+      "shipment_status=not_shipped",
+      "shipping_provider=",
+      "estimated_delivery_date=รอการชำระเงิน"
+    ],
+    "notes": "Shipment query for ORD-1004 — not_shipped and no provider yet, ETA says 'รอการชำระเงิน' (awaiting payment)"
+  },
+  {
+    "scenario_id": "TRANS-020",
+    "category": "transaction",
+    "subcategory": "shipment_status",
+    "language": "th-en",
+    "input_type": "abnormal",
+    "user_message": "ORD-1005 shipment ถึงไหนแล้วครับ",
+    "expected_intent": "SHIPMENT_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-1005"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-1005",
+      "shipment_status=return_initiated",
+      "shipping_provider=Kerry Express",
+      "estimated_delivery_date=N/A"
+    ],
+    "notes": "Mixed Thai-English shipment query for ORD-1005 — return initiated with Kerry, estimated_delivery is N/A"
+  },
+  {
+    "scenario_id": "TRANS-021",
+    "category": "transaction",
+    "subcategory": "shipment_status",
+    "language": "th-en",
+    "input_type": "boundary",
+    "user_message": "ord-1001 ส่งของถึงรึยัง",
+    "expected_intent": "SHIPMENT_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-1001"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-1001",
+      "shipment_status=in_transit",
+      "shipping_provider=Flash Express",
+      "estimated_delivery_date=2026-07-14"
+    ],
+    "notes": "Lowercase ord-1001 with casual 'ส่งของถึงรึยัง' — boundary edge case for case-insensitive order ID matching"
+  },
+  {
+    "scenario_id": "TRANS-022",
+    "category": "transaction",
+    "subcategory": "shipment_status",
+    "language": "en",
+    "input_type": "boundary",
+    "user_message": "ORD-1003 delivery status?",
+    "expected_intent": "SHIPMENT_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-1003"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-1003",
+      "shipment_status=delivered",
+      "shipping_provider=J&T Express",
+      "estimated_delivery_date=2026-07-05"
+    ],
+    "notes": "Short English shipment query with 'delivery' keyword — ORD-1003 delivered via J&T"
+  },
+  {
+    "scenario_id": "TRANS-023",
+    "category": "transaction",
+    "subcategory": "shipment_status",
+    "language": "th",
+    "input_type": "abnormal",
+    "user_message": "ORD-9998  ส่งของหรือยังคะ",
+    "expected_intent": "SHIPMENT_STATUS",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-9998"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-9998",
+      "order_not_found=true"
+    ],
+    "notes": "Unknown order ORD-9998 — double space before query, tests whitespace tolerance in unknown-order path"
+  },
+  {
+    "scenario_id": "TRANS-024",
+    "category": "transaction",
+    "subcategory": "tracking_number",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "ขอหมายเลขพัสดุ ORD-1001 หน่อยค่ะ",
+    "expected_intent": "TRACKING_NUMBER",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-1001"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-1001",
+      "tracking_number=FLASH-TRK-1001",
+      "shipping_provider=Flash Express"
+    ],
+    "notes": "Standard tracking-number request for ORD-1001 — expects FLASH-TRK-1001 via Flash Express"
+  },
+  {
+    "scenario_id": "TRANS-025",
+    "category": "transaction",
+    "subcategory": "tracking_number",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "ORD-1002 เลขพัสดุอะไรครับ",
+    "expected_intent": "TRACKING_NUMBER",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-1002"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-1002",
+      "tracking_number=KERRY-TRK-1002",
+      "shipping_provider=Kerry Express"
+    ],
+    "notes": "Short Thai tracking query 'เลขพัสดุอะไร' for ORD-1002 — expects KERRY-TRK-1002 via Kerry"
+  },
+  {
+    "scenario_id": "TRANS-026",
+    "category": "transaction",
+    "subcategory": "tracking_number",
+    "language": "th",
+    "input_type": "normal",
+    "user_message": "ORD-1003 อยากได้เลขติดตามพัสดุครับ",
+    "expected_intent": "TRACKING_NUMBER",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-1003"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-1003",
+      "tracking_number=JNT-TRK-1003",
+      "shipping_provider=J&T Express"
+    ],
+    "notes": "Polite tracking request with 'เลขติดตามพัสดุ' for ORD-1003 — JNT-TRK-1003 via J&T"
+  },
+  {
+    "scenario_id": "TRANS-027",
+    "category": "transaction",
+    "subcategory": "tracking_number",
+    "language": "th",
+    "input_type": "boundary",
+    "user_message": "ORD-1004 มี tracking number ไหมคะ",
+    "expected_intent": "TRACKING_NUMBER",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-1004"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-1004",
+      "tracking_number=",
+      "shipping_provider="
+    ],
+    "notes": "Tracking query for ORD-1004 — empty tracking number and empty provider (not yet shipped), tests edge case of missing tracking data"
+  },
+  {
+    "scenario_id": "TRANS-028",
+    "category": "transaction",
+    "subcategory": "tracking_number",
+    "language": "th-en",
+    "input_type": "normal",
+    "user_message": "ORD-1005 ขอ tracking number หน่อยครับ",
+    "expected_intent": "TRACKING_NUMBER",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-1005"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-1005",
+      "tracking_number=KERRY-TRK-1005",
+      "shipping_provider=Kerry Express"
+    ],
+    "notes": "Mixed Thai-English tracking request for ORD-1005 — expects KERRY-TRK-1005 via Kerry"
+  },
+  {
+    "scenario_id": "TRANS-029",
+    "category": "transaction",
+    "subcategory": "tracking_number",
+    "language": "en",
+    "input_type": "normal",
+    "user_message": "Can I get the tracking number for ORD-1001?",
+    "expected_intent": "TRACKING_NUMBER",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-1001"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-1001",
+      "tracking_number=FLASH-TRK-1001",
+      "shipping_provider=Flash Express"
+    ],
+    "notes": "Full English tracking request for ORD-1001 — 'tracking number' keyword"
+  },
+  {
+    "scenario_id": "TRANS-030",
+    "category": "transaction",
+    "subcategory": "tracking_number",
+    "language": "th-en",
+    "input_type": "boundary",
+    "user_message": "ORD-1002 track หน่อย",
+    "expected_intent": "TRACKING_NUMBER",
+    "expected_agent": "transaction_tracker",
+    "expected_entities": {"order_id": "ORD-1002"},
+    "requires_clarification": false,
+    "simulated_human_review": false,
+    "expected_answer_facts": [
+      "order_id=ORD-1002",
+      "tracking_number=KERRY-TRK-1002",
+      "shipping_provider=Kerry Express"
+    ],
+    "notes": "Very short mixed query — 'track' keyword with minimal Thai 'หน่อย', tests casual one-word trigger"
+  }
+]

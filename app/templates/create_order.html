@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <title>Create a Demo Order — SiamCart</title>
+    <meta name="description" content="Create a demo order in the SiamCart research prototype marketplace with AI customer support.">
+    <link rel="stylesheet" href="/static/css/styles.css?v=store-sqlite-2">
+</head>
+<body>
+
+    <!-- ══ 1. TOP PROMOTION BAR ══ -->
+    <div class="topbar">
+        <div class="container topbar-inner">
+            <span class="topbar-item">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M1 6h18v12H1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M19 9l4 3v6h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6" cy="18" r="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="16" cy="18" r="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+                Free shipping on qualifying Bangkok orders
+            </span>
+            <span class="topbar-item">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Secure demo checkout
+            </span>
+            <span class="topbar-item topbar-item-lang">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3 12h18M12 3c2.5 2.5 3.8 5.7 3.8 9S14.5 18.5 12 21c-2.5-2.5-3.8-5.7-3.8-9S9.5 5.5 12 3z" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+                Thai &amp; English support
+            </span>
+        </div>
+    </div>
+
+    <!-- ══ 2. STICKY MAIN HEADER ══ -->
+    <header class="site-header">
+        <div class="container header-inner">
+            <a href="/" class="logo" aria-label="SiamCart home">
+                <span class="logo-mark" aria-hidden="true">
+                    <svg viewBox="0 0 32 32"><path d="M16 2l12 6v10c0 6.5-5 11-12 13C9 29 4 24.5 4 18V8z" fill="currentColor"/><path d="M11 17l3.2 3.2L21 13" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <span class="logo-text">Siam<strong>Cart</strong></span>
+            </a>
+            <div class="header-actions">
+                <a href="/" class="btn btn-secondary co-back-btn">Back to Store</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="create-order-page" id="main">
+        <div class="container">
+
+            <div class="co-page-head">
+                <a href="/" class="co-back-link">← Back to Store</a>
+                <h1>Create a Demo Order</h1>
+                <p class="co-page-sub">Pick products, enter delivery details and create an order in the SiamCart demo database.</p>
+            </div>
+
+            <div class="research-notice" role="note">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 100 20 10 10 0 000-20z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v5M12 16.5h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                <p><strong>Research prototype.</strong> Orders are simulated — stored in the demo database, and no real payment is collected. Do not enter real card details.</p>
+            </div>
+
+            <div class="co-layout">
+
+                <!-- LEFT: product picker -->
+                <section class="co-panel" aria-label="Choose products">
+                    <div class="co-toolbar">
+                        <input type="search" id="coSearch" placeholder="Search products…" aria-label="Search products" autocomplete="off">
+                        <select id="coCategory" aria-label="Filter by category">
+                            <option value="All Products">All Products</option>
+                        </select>
+                    </div>
+                    <div class="order-product-list" id="coProducts" aria-live="polite"></div>
+                </section>
+
+                <!-- RIGHT: order builder + success -->
+                <div class="co-builder-col">
+
+                    <section class="co-panel" id="coBuilder" aria-label="Order summary and customer details">
+                        <div class="selected-order-items">
+                            <h2>Selected Items <span class="drawer-count" id="coSelectedCount"></span></h2>
+                            <div id="coSelectedList"></div>
+                            <div class="cart-summary">
+                                <div class="cart-line"><span>Subtotal</span><span id="coSubtotal">฿0</span></div>
+                                <div class="cart-line"><span>Estimated shipping</span><span id="coShipping">—</span></div>
+                                <div class="cart-line cart-grand"><span>Total</span><span id="coTotal">฿0</span></div>
+                            </div>
+                        </div>
+
+                        <form id="createOrderForm" novalidate>
+                            <div class="co-submit-error" id="coSubmitError" hidden role="alert"></div>
+
+                            <section class="co-section">
+                                <h3>Customer information</h3>
+                                <div class="co-field"><label for="coName">Full name</label><input id="coName" type="text" autocomplete="name"><p class="co-error" data-for="coName"></p></div>
+                                <div class="co-row">
+                                    <div class="co-field"><label for="coEmail">Email</label><input id="coEmail" type="email" autocomplete="email"><p class="co-error" data-for="coEmail"></p></div>
+                                    <div class="co-field"><label for="coPhone">Phone</label><input id="coPhone" type="tel" autocomplete="tel"><p class="co-error" data-for="coPhone"></p></div>
+                                </div>
+                            </section>
+
+                            <section class="co-section">
+                                <h3>Delivery information</h3>
+                                <div class="co-field"><label for="coAddress">Address</label><input id="coAddress" type="text" autocomplete="street-address"><p class="co-error" data-for="coAddress"></p></div>
+                                <div class="co-row">
+                                    <div class="co-field"><label for="coDistrict">District</label><input id="coDistrict" type="text"><p class="co-error" data-for="coDistrict"></p></div>
+                                    <div class="co-field"><label for="coProvince">Province</label><input id="coProvince" type="text" autocomplete="address-level1"><p class="co-error" data-for="coProvince"></p></div>
+                                </div>
+                                <div class="co-field"><label for="coPostal">Postal code</label><input id="coPostal" type="text" inputmode="numeric" maxlength="5" autocomplete="postal-code"><p class="co-error" data-for="coPostal"></p></div>
+                            </section>
+
+                            <section class="co-section">
+                                <h3>Payment method</h3>
+                                <div class="co-payments">
+                                    <label class="co-pay"><input type="radio" name="payment" value="COD"><span><strong>Cash on Delivery</strong><small>Pay when your order arrives</small></span></label>
+                                    <label class="co-pay"><input type="radio" name="payment" value="Bank Transfer"><span><strong>Bank Transfer</strong><small>Transfer to our demo bank account</small></span></label>
+                                    <label class="co-pay"><input type="radio" name="payment" value="Card"><span><strong>Demo Card Payment</strong><small>Simulated payment — no card number required</small></span></label>
+                                </div>
+                                <p class="co-error" data-for="payment"></p>
+                            </section>
+
+                            <button type="submit" class="btn btn-primary btn-block" id="coCreateBtn" disabled>Select a Payment Method</button>
+                        </form>
+                    </section>
+
+                    <section class="co-panel co-success" id="coSuccess" hidden aria-label="Order confirmation">
+                        <div class="confirm-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
+                        <h2 id="coSuccessTitle">Order created successfully</h2>
+                        <p class="confirm-ref">Order reference <strong id="coSuccessRef">—</strong></p>
+                        <p class="confirm-text">Your order was stored in the SiamCart demo database. Track it anytime through the AI assistant.</p>
+                        <div class="confirm-details" id="coSuccessDetails"></div>
+                        <div class="confirm-details confirm-order-items" id="coSuccessItems" hidden></div>
+                        <div class="confirm-actions">
+                            <button class="btn btn-primary" id="coSuccessAskAi">Ask AI About This Order</button>
+                            <button class="btn btn-secondary" id="coSuccessViewOrders">View My Orders</button>
+                            <button class="btn btn-secondary" id="coSuccessView">View Order Details</button>
+                            <button class="btn btn-ghost" id="coSuccessAgain">Create Another Order</button>
+                        </div>
+                    </section>
+
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="/static/js/create_order.js?v=store-sqlite-2"></script>
+</body>
+</html>
