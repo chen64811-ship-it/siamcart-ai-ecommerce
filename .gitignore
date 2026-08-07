@@ -52,6 +52,10 @@ thesis/
 *.tmp
 *.temp
 
+# ── Raw demo recording artifacts (keep local, not portfolio) ──────────
+docs/assets/video_tmp/
+scripts/probe_cart.py
+
 # ── OS / editor ────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db

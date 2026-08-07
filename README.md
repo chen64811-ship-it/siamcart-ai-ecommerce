@@ -1,50 +1,115 @@
 # SiamCart
 
-LLM-Powered Multi-Agent Customer Support Framework for Thai E-commerce
+**LLM-Powered Multi-Agent Customer Support Framework for Thai E-commerce**
 
-A research prototype demonstrating an LLM-powered multi-agent framework for
-automated customer support in Thai e-commerce. SiamCart combines a working
-storefront (products, cart, checkout) with a Thai customer-support assistant
-that answers order, payment, shipping, and policy questions, and simulates
-transactional workflows (payment, cancellation/refund, shipment) for research
-and demonstration purposes.
+![Python 3.11](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
+![Railway](https://img.shields.io/badge/Railway-0B0D0E?logo=railway&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)
 
-## Overview
+**Live Demo:** https://web-production-1ea79.up.railway.app
+**GitHub:** https://github.com/chen64811-ship-it/siamcart-ai-ecommerce
 
-- **Research prototype** — built for an M.Sc. thesis study on multi-agent
-  customer support; not a production store.
-- **Thai-first** — every customer-facing assistant response is polite,
-  natural Thai, regardless of the input language.
-- **Multi-agent architecture** — an Intelligent Router dispatches to focused
-  agents (see below).
-- **Stack** — FastAPI + SQLite + ChromaDB + DeepSeek (optional LLM formatter).
-- **Simulated transactions** — payments, refunds, and shipments are explicit
-  research simulations. No real money moves, no real courier is connected.
+SiamCart is a deployed research prototype for Thai e-commerce customer support.
+It combines deterministic transaction processing, policy retrieval, persistent
+multi-turn context, and an optional LLM layer inside a FastAPI-based multi-agent
+framework.
 
-## Key Features
+## Live Demo
 
-- Product catalog and shopping cart
-- Checkout and order creation
-- Demo payment (explicit, research-only simulation)
-- My Orders (search by order ID / email / phone)
-- Product-aware support (deterministic product catalog lookup)
-- Transaction tracking (order / payment / shipment status)
-- Store policy evaluation (RAG over policy documents)
-- Persistent multi-turn chat context (survives refresh and page changes)
-- Demo cancellation and simulated refund
-- Demo shipment lifecycle (Not Shipped → In Transit → Delivered)
-- Tracking number and courier simulation (SC-… numbers, SiamCart Demo Logistics)
+![SiamCart Demo](docs/assets/siamcart_demo.gif)
 
-## Multi-Agent Architecture
+Try it: https://web-production-1ea79.up.railway.app
 
-The framework keeps the thesis terminology — three evaluated agents:
+## Architecture
 
-1. **Intelligent Router** — deterministic intent classification and routing.
-2. **Transaction Tracker** — SQLite-backed order/payment/shipment facts.
-3. **Store Policy Evaluator** — RAG retrieval over store policy documents.
+![SiamCart Architecture](docs/assets/siamcart_architecture.png)
 
-In addition, the storefront ships a **Product Catalog Lookup** handler. It is
-a **Demo Extension / deterministic handler**, not an evaluated fourth agent.
+The evaluated framework (M.Sc. thesis study) consists of three agents:
+
+- **Intelligent Router** — deterministic intent classification and routing.
+- **Transaction Tracker** — SQLite-backed order/payment/shipment facts.
+- **Store Policy Evaluator** — RAG retrieval over store policy documents.
+
+Additional components:
+
+- **Product Catalog Lookup** — a demo extension with a deterministic handler,
+  not a fourth evaluated agent.
+- **Optional DeepSeek** — optional response-generation/fallback layer on top of
+  the deterministic pipeline.
+
+Deployment:
+
+- Docker containerization
+- Railway hosting with a persistent `/data` volume
+- SQLite database and ChromaDB index stored on the persistent volume
+
+## Demo Customer Journey
+
+Normal path:
+
+```
+Browse Products
+→ Add to Cart
+→ Checkout
+→ Demo Payment
+→ My Orders
+→ Ask AI
+→ Simulate Shipment
+→ Tracking
+→ Mark Delivered
+```
+
+Cancellation path:
+
+```
+Processing + Not Shipped
+→ Cancel Order
+→ Simulated Refund
+→ Stock Restored
+```
+
+No real payment or courier transaction occurs.
+
+## What This Project Demonstrates
+
+- FastAPI API design
+- deterministic business logic
+- SQLite transactions and persistent state
+- multi-turn conversational context
+- multi-agent routing
+- RAG-based store policy retrieval
+- simulated payment/refund/shipment workflows
+- Docker containerization
+- Railway deployment with persistent volume
+- automated focused and regression testing
+
+## Reliability
+
+- Demo stabilization focused tests: 21 passed
+- Shipment lifecycle focused tests: 21 passed
+- Relevant regression suites: 95 passed
+- Public Railway smoke journey passed
+- SQLite state persisted after Railway service restart
+- Browser console: 0 critical JavaScript errors during final public smoke
+
+> The demo extensions were added after the frozen thesis evaluation and were
+> not part of the original 120-scenario comparison.
+
+## Research Scope
+
+- Research prototype — built for an M.Sc. thesis study on multi-agent customer
+  support; not a production store.
+- Simulated payment — no real money is transferred.
+- Simulated refund — no real money is transferred.
+- Simulated shipment and tracking — no real courier integration, no real
+  tracking API, no ETA prediction.
+- No production authentication (research prototype only).
+- Optional DeepSeek layer — deterministic pipeline works without it; the LLM
+  is an optional response-generation/fallback layer.
+- Customer-facing responses are generated in Thai by a deterministic
+  SQLite-backed pipeline, with optional LLM formatting when configured.
 
 ## Tech Stack
 
@@ -55,27 +120,6 @@ a **Demo Extension / deterministic handler**, not an evaluated fourth agent.
 - DeepSeek (optional LLM formatter)
 - Vanilla JavaScript
 - HTML/CSS
-
-## Demo Order Lifecycle
-
-```
-Created
-→ Paid (Demo)
-→ Processing
-→ In Transit (Demo)
-→ Delivered (Demo)
-```
-
-Cancellation path (only while Processing + Not Shipped):
-
-```
-Processing + Not Shipped
-→ Cancelled
-→ Refunded (Demo, when already paid)
-```
-
-Once a parcel is In Transit or Delivered, direct cancellation is blocked and
-the assistant points to return/refund policy guidance instead.
 
 ## Local Setup
 
@@ -137,32 +181,9 @@ only, no secrets). The important ones:
 Focused suites (temporary SQLite only — the real runtime database is never
 touched by tests):
 
-- Demo stabilization focused tests: **21 passed**
-- Shipment lifecycle focused tests: **21 passed**
-- Relevant regression suites (cancellation, shipment, stabilization, tracker,
-  router): **95 passed**
-
-Run a suite:
-
 ```bash
 .venv\Scripts\python.exe -m pytest tests/test_demo_shipment_lifecycle.py -v
 ```
-
-> **Note on the thesis evaluation:** the demo extensions (multi-turn context,
-> cancellation UX, shipment lifecycle) were added **after** the frozen thesis
-> evaluation and were **not** part of the original 120-scenario comparison.
-> The original evaluation datasets/results are preserved and have not been
-> modified or re-run for these extensions.
-
-## Research Scope
-
-- Simulated payment — no real money is transferred.
-- Simulated refund — no real money is transferred.
-- Simulated shipment and tracking — no real courier integration, no real
-  tracking API, no ETA prediction.
-- No production authentication (research prototype only).
-- Customer-facing responses are generated in Thai by a deterministic
-  SQLite-backed pipeline, with optional LLM formatting when configured.
 
 ## Project Layout
 
