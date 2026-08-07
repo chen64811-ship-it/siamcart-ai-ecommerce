@@ -18,6 +18,7 @@ ORDER_ID_PATTERN = re.compile(r"ORD[-]?\d{4}", re.IGNORECASE)
 
 # Priority order — highest first. Matches are checked in this order.
 _INTENT_PRIORITY: List[str] = [
+    "RESEARCH_INFO",
     "TRACKING_NUMBER",
     "PAYMENT_STATUS",
     "SHIPMENT_STATUS",
@@ -47,6 +48,7 @@ _AGENT_MAP = {
     "TRACKING_NUMBER": "transaction_tracker",
     "RETURN_REFUND": "store_policy_evaluator",
     "STORE_POLICY": "store_policy_evaluator",
+    "RESEARCH_INFO": "general_response",
     "GREETING": "general_response",
     "CLARIFICATION": "clarification_handler",
     "UNKNOWN": "clarification_handler",
@@ -218,6 +220,22 @@ _INTENT_PATTERNS: Dict[str, List[str]] = {
         "make payment",
         "process refund",
     ],
+    "RESEARCH_INFO": [
+        # Deterministic research/about intent — checked via pre-scan regex
+        # before the priority loop (see _POLICY_PHRASE_RE / _RESEARCH_INFO_RE).
+        # Substring list here keeps route_message() taxonomy self-documenting.
+        "what research",
+        "which research",
+        "this research",
+        "research prototype",
+        "what is this project",
+        "what is this research",
+        "about this research",
+        "งานวิจัยนี้",
+        "เกี่ยวกับงานวิจัย",
+        "siamcart คืออะไร",
+        "siamcart คือ",
+    ],
 }
 
 # ── Greeting typo handling (Task 5D-5) ───────────────────────────────
@@ -229,6 +247,53 @@ _EN_GREETING_PHRASES = {
     "hello there", "hi there", "hey there", "hello everyone",
 }
 _THAI_GREETING_WORDS = ("สวัสดี", "หวัดดี")
+
+
+# ── Intent-boundary hotfix: deterministic pre-scans ────────────────────
+# Checked BEFORE the generic priority loop so that:
+#   - policy questions ("What is the return policy?", "What policies does
+#     SiamCart follow?", "คืนสินค้าได้ไหม") never fall into RETURN_REFUND
+#     or OUT_OF_SCOPE;
+#   - research/about questions ("What research is SiamCart part of?",
+#     "What is SiamCart?") are never hijacked by active-order context.
+# These are pure regex matches on the normalized message — no LLM, no
+# external data, no invented policy terms.
+
+_POLICY_PHRASE_RE = re.compile(
+    r"("
+    r"return policy|refund policy|store policy|cancellation policy|"
+    r"exchange policy|shipping policy|payment policy|privacy policy|"
+    r"delivery policy|terms and conditions|"
+    r"what policies|which policies|the policies|store rules|"
+    r"นโยบายการคืนสินค้า|นโยบายการคืนเงิน|นโยบายการเปลี่ยนสินค้า|"
+    r"นโยบายการจัดส่ง|นโยบายการชำระเงิน|นโยบายของร้าน|"
+    r"คืนสินค้าได้ไหม|คืนสินค้าได้มั้ย|คืนได้ไหม|คืนเงินได้ไหม|"
+    r"\bpolicy\b|\bpolicies\b|นโยบาย|ข้อกำหนด|กฎของร้าน|เงื่อนไขของร้าน"
+    r")",
+    re.IGNORECASE,
+)
+
+_RESEARCH_INFO_RE = re.compile(
+    r"("
+    r"\bwhat\s+research\b|\bwhich\s+research\b|\bthis\s+research\b|"
+    r"\bresearch\s+prototype\b|\bpart\s+of\s+(a\s+)?research\b|"
+    r"\babout\s+this\s+research\b|\babout\s+the\s+research\b|"
+    r"\bthesis\b|งานวิจัย|"
+    r"\bwhat\s+is\s+this\s+project\b|\bwhat\s+is\s+this\s+research\b|"
+    r"\bwhat\s+is\s+this\s+system\b|\bthis\s+project\s+about\b|"
+    r"\babout\s+this\s+project\b"
+    r")",
+    re.IGNORECASE,
+)
+
+# Anchored identity questions ("What is SiamCart?", "SiamCart คืออะไร") —
+# anchored so "What is SiamCart's return policy?" stays a policy question.
+_IDENTITY_QUESTION_RE = re.compile(
+    r"^\s*what('s|\s+is)\s+siam\s*cart\s*\??\s*$"
+    r"|^\s*siam\s*cart\s+คืออะไร\s*\??\s*$"
+    r"|^\s*siam\s*cart\s+คือ\s*\??\s*$",
+    re.IGNORECASE,
+)
 
 
 def _is_greeting_message(message: str) -> bool:
@@ -277,6 +342,15 @@ def _classify_with_source(message: str) -> Tuple[str, str]:
       - "unknown": nothing matched
     """
     msg_lower = message.lower().strip()
+
+    # ── Intent-boundary pre-scans (deterministic) ──────────────────
+    # Policy phrases first, then research/about. Both are "explicit"
+    # sources so the orchestrator's explicit-topic priority (new intent
+    # overrides active-order context and pending workflows) applies.
+    if _POLICY_PHRASE_RE.search(msg_lower):
+        return "STORE_POLICY", "explicit"
+    if _IDENTITY_QUESTION_RE.match(msg_lower) or _RESEARCH_INFO_RE.search(msg_lower):
+        return "RESEARCH_INFO", "explicit"
 
     # Check each intent group in priority order
     for intent in _INTENT_PRIORITY:

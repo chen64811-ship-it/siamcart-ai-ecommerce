@@ -16,13 +16,44 @@ import time
 from typing import Dict, List, Optional
 
 import openai
-from app.agents.policy_index import retrieve_policy_clauses
+from app.agents.policy_index import (
+    retrieve_policy_clauses,
+    keyword_policy_retrieval,
+    is_title_only_chunk,
+    POLICY_TYPE_KEYWORDS,
+    GENERAL_POLICY_KEYWORDS,
+)
 from app.config import DEEPSEEK_ENABLED, LLM_CONFIG
 
 
 # ── Constants ─────────────────────────────────────────────────────────
 
 CONFIDENCE_THRESHOLD = 0.6  # Cosine distance: lower = more similar
+
+# Cancellation-related words. There is no dedicated cancellation policy
+# file — the grounded cancellation content lives in the payment policy
+# (automatic order cancellation on failed payment). A cancellation
+# question must therefore NOT be collapsed into the general-policy
+# overview; the ChromaDB retrieval (which returns the payment clauses)
+# stays the primary source for it.
+_CANCEL_POLICY_KEYWORDS = ["cancel", "cancellation", "ยกเลิก"]
+
+
+def _detect_explicit_policy_type(query: str) -> Optional[str]:
+    """Return the policy type explicitly named in the query, else None.
+
+    Deterministic keyword scoring over the shared policy-type lexicon
+    (English + Thai). A query naming a policy type must be answered with
+    that type's clauses.
+    """
+    norm = (query or "").lower().strip()
+    hits = {
+        ptype: sum(1 for kw in kws if kw.lower() in norm)
+        for ptype, kws in POLICY_TYPE_KEYWORDS.items()
+    }
+    if not any(hits.values()):
+        return None
+    return max(hits, key=hits.get)
 
 _POLICY_SYSTEM_PROMPT = """You are the Store Policy Evaluator for SiamCart Demo Store.
 
@@ -142,30 +173,105 @@ def evaluate_policy_query(
     """Evaluate a store policy query with optional DeepSeek RAG generation.
 
     Returns structured result with all fields needed by the orchestrator.
+
+    Deterministic data-source priority (DeepSeek stays disabled):
+      1. ChromaDB retrieval — used only when its top clause is confident,
+         substantive (non-title-only), AND consistent with the question:
+         same explicit policy type when one is named, Thai text when
+         available;
+      2. keyword retrieval from the local policy markdown files — when
+         ChromaDB is unavailable, the index is empty, the best match is
+         low-confidence, every top chunk is title-only, or Chroma's top
+         clause answers a DIFFERENT policy type / language than asked;
+      3. honest Thai fallback (clarification / index-not-setup) — when
+         neither source produced grounded clauses.
+    Never invents policy terms: every clause comes verbatim from the local
+    policy files or the ChromaDB index built from them.
     """
-    # Step 1: Retrieve from ChromaDB
-    retrieval_result = retrieve_policy_clauses(query, top_k=top_k)
-    clauses = retrieval_result.get("retrieved_clauses", [])
-    retrieval_success = retrieval_result.get("retrieval_success", False)
+    # Step 1: Retrieve from ChromaDB (never raises — the fallback chain
+    # absorbs index/model unavailability).
+    retrieval_source = "chromadb"
+    try:
+        retrieval_result = retrieve_policy_clauses(query, top_k=top_k)
+    except Exception:
+        retrieval_result = {
+            "retrieved_clauses": [],
+            "retrieval_success": False,
+            "total_chunks_in_index": 0,
+        }
+
+    # Drop document-header chunks ("# Return Policy — ...") — they carry no
+    # policy body and must never be used as grounded evidence.
+    raw_clauses = retrieval_result.get("retrieved_clauses", [])
+    clauses = [
+        c for c in raw_clauses
+        if not is_title_only_chunk(c.get("text", ""))
+    ]
     total_in_index = retrieval_result.get("total_chunks_in_index", 0)
+    best_distance = clauses[0]["distance"] if clauses else 1.0
+
+    # What is the question actually about? (deterministic keyword lexicon)
+    explicit_type = _detect_explicit_policy_type(query)
+    cancel_q = any(kw in query.lower() for kw in _CANCEL_POLICY_KEYWORDS)
+    general_q = any(kw in query.lower() for kw in GENERAL_POLICY_KEYWORDS)
+
+    use_chroma = (
+        retrieval_result.get("retrieval_success", False)
+        and len(clauses) > 0
+        and best_distance <= CONFIDENCE_THRESHOLD
+    )
+    if use_chroma:
+        top_type = clauses[0].get("policy_type", "")
+        top_lang = str(clauses[0].get("language", "")).lower()
+        if explicit_type and top_type != explicit_type:
+            # Chroma's top clause answers a different policy than asked.
+            use_chroma = False
+        elif explicit_type and top_lang != "th":
+            # Chroma's top clause is English-only; the keyword path
+            # guarantees a Thai customer-facing answer.
+            use_chroma = False
+        elif not explicit_type and general_q and not cancel_q:
+            # General policy question → grounded overview, not a single
+            # random policy area.
+            use_chroma = False
+
+    keyword_hint = None
+    is_general = False
+
+    if not use_chroma:
+        # Step 2: deterministic keyword retrieval from the local policy
+        # markdown files (priority 2 of the data-source chain).
+        keyword_result = keyword_policy_retrieval(query)
+        if keyword_result.get("retrieval_success"):
+            clauses = keyword_result.get("retrieved_clauses", [])
+            best_distance = 0.0
+            retrieval_success = True
+            retrieval_source = "keyword"
+            keyword_hint = keyword_result.get("policy_type_hint")
+            is_general = bool(keyword_result.get("is_general_policy"))
+        else:
+            clauses = []
+            retrieval_success = False
+            retrieval_source = "keyword"
+    else:
+        retrieval_success = True
 
     requires_clarification = False
     simulated_human_review = False
 
-    # Step 2: Empty index
-    if total_in_index == 0:
-        return _build_result(
-            query=query,
-            clauses=[],
-            retrieval_success=False,
-            deterministic_response=_INDEX_NOT_SETUP,
-            requires_clarification=False,
-            simulated_human_review=True,
-            evidence={},
-        )
-
-    # Step 3: No relevant results
+    # Step 3: nothing grounded → honest fallback (priority 3).
     if not retrieval_success or not clauses:
+        if total_in_index == 0:
+            return _build_result(
+                query=query,
+                clauses=[],
+                retrieval_success=False,
+                deterministic_response=_INDEX_NOT_SETUP,
+                requires_clarification=False,
+                simulated_human_review=True,
+                evidence={},
+                retrieval_source=retrieval_source,
+            )
         return _build_result(
             query=query,
             clauses=[],
@@ -174,25 +280,19 @@ def evaluate_policy_query(
             requires_clarification=True,
             simulated_human_review=False,
             evidence={},
+            retrieval_source=retrieval_source,
         )
 
-    # Step 4: Low confidence
-    best_distance = clauses[0]["distance"]
-    if best_distance > CONFIDENCE_THRESHOLD:
-        return _build_result(
-            query=query,
-            clauses=clauses,
-            retrieval_success=True,
-            deterministic_response=_CLARIFICATION_REQUEST,
-            requires_clarification=True,
-            simulated_human_review=False,
-            evidence={"top_clause_distance": best_distance},
-        )
+    # Step 4: Extract policy type. For a keyword overview, every policy
+    # area is present → the overview builder handles the response.
+    if is_general:
+        policy_type = "overview"
+    elif keyword_hint:
+        policy_type = keyword_hint
+    else:
+        policy_type = _detect_dominant_policy_type(clauses)
 
-    # Step 5: Extract policy type
-    policy_type = _detect_dominant_policy_type(clauses)
-
-    # Step 6: Build evidence object
+    # Step 5: Build evidence object
     policy_sources = sorted(set(c["source_filename"] for c in clauses))
     evidence = {
         "policy_type": policy_type,
@@ -203,12 +303,13 @@ def evaluate_policy_query(
         "policy_sources": policy_sources,
         "retrieved_chunk_count": len(clauses),
         "top_similarity_score": round(1.0 - best_distance, 4),
+        "retrieval_source": retrieval_source,
     }
 
-    # Step 7: Build deterministic fallback response
+    # Step 6: Build deterministic fallback response
     deterministic_response = _build_deterministic_response(policy_type, clauses)
 
-    # Step 8: Assemble result (NO DeepSeek call — generation is now in llm_generator.py)
+    # Step 7: Assemble result (NO DeepSeek call — generation is now in llm_generator.py)
     result = _build_result(
         query=query,
         clauses=clauses,
@@ -218,6 +319,7 @@ def evaluate_policy_query(
         simulated_human_review=False,
         evidence=evidence,
         policy_sources=policy_sources,
+        retrieval_source=retrieval_source,
     )
 
     # Set response to deterministic fallback; orchestrator will call llm_generator
@@ -236,18 +338,61 @@ def evaluate_policy_query(
 # ── Internal: Deterministic response builder ──────────────────────────
 
 
+# Thai customer-facing labels for the general-policy overview.
+_POLICY_TYPE_LABELS_THAI = {
+    "return": "นโยบายการคืนสินค้า",
+    "refund": "นโยบายการคืนเงิน",
+    "exchange": "นโยบายการเปลี่ยนสินค้า",
+    "shipping": "นโยบายการจัดส่ง",
+    "payment": "นโยบายการชำระเงิน",
+}
+
+
+def _build_overview_response(clauses: List[Dict]) -> str:
+    """Grounded Thai overview of every SiamCart policy area.
+
+    Built exclusively from the local policy markdown files (one Thai
+    section per policy type). Never invents policy terms.
+    """
+    parts = []
+    for c in clauses:
+        ptype = c.get("policy_type", "")
+        label = _POLICY_TYPE_LABELS_THAI.get(ptype, ptype)
+        text = " ".join((c.get("text") or "").split())[:110]
+        if text:
+            parts.append(f"- {label}: {text}")
+    if not parts:
+        return ""
+    return "ตามนโยบายของ SiamCart ค่ะ มีนโยบายหลักดังนี้:\n" + "\n".join(parts)
+
+
 def _build_deterministic_response(policy_type: str, clauses: List[Dict]) -> str:
     """Build a readable Thai deterministic fallback from retrieved clauses.
 
     Task 5D-7 Objective 5: the customer-facing fallback must be Thai even when
     retrieval returned an English chunk, so a Thai-language clause is preferred
     when one is available (chunks carry a "language" field).
+
+    Intent-boundary hotfix: document-header chunks ("# Return Policy — ...")
+    are never used as the summary, and a general-policy question ("What
+    policies does SiamCart follow?") produces a grounded overview instead of a
+    single mislabelled clause.
     """
+    if policy_type == "overview":
+        return _build_overview_response(clauses)
+
+    substantive = [
+        c for c in clauses
+        if c.get("text") and not is_title_only_chunk(c.get("text", ""))
+    ] or clauses
     thai_clause = next(
-        (c for c in clauses if str(c.get("language", "")).lower() == "th" and c.get("text")),
+        (
+            c for c in substantive
+            if str(c.get("language", "")).lower() == "th" and c.get("text")
+        ),
         None,
     )
-    summary_clause = thai_clause or (clauses[0] if clauses else None)
+    summary_clause = thai_clause or (substantive[0] if substantive else None)
     if not summary_clause:
         return ""
     template = _RESPONSE_TEMPLATES.get(policy_type)
@@ -255,7 +400,7 @@ def _build_deterministic_response(policy_type: str, clauses: List[Dict]) -> str:
         summary = summary_clause["text"][:200]
         return template.format(summary=summary)
 
-    sources = ", ".join(set(c.get("source_filename", "") for c in clauses[:2]))
+    sources = ", ".join(set(c.get("source_filename", "") for c in substantive[:2]))
     return f"ตามนโยบายของ SiamCart ที่พบใน {sources}: {summary_clause['text'][:200]}"
 
 
@@ -277,6 +422,7 @@ def _build_result(
     simulated_human_review: bool,
     evidence: Dict,
     policy_sources: Optional[List[str]] = None,
+    retrieval_source: str = "chromadb",
 ) -> Dict:
     """Build the common result dict structure."""
     return {
@@ -295,6 +441,7 @@ def _build_result(
             for c in clauses
         ],
         "retrieval_success": retrieval_success,
+        "retrieval_source": retrieval_source,
         "requires_clarification": requires_clarification,
         "simulated_human_review": simulated_human_review,
         "deterministic_response": deterministic_response,

@@ -321,6 +321,129 @@ def retrieve_policy_clauses(
     }
 
 
+# ── Deterministic keyword retrieval (intent-boundary hotfix) ──────────
+# The local policy markdown files under data/policies/ are the fallback
+# source of truth when ChromaDB retrieval is unavailable, the index is
+# empty, the top match is low-confidence, or the top chunks are
+# title-only. Clause text always comes VERBATIM from the local files —
+# no policy terms are ever invented.
+
+# Policy-type keyword lexicon (English + Thai).
+POLICY_TYPE_KEYWORDS: Dict[str, List[str]] = {
+    "return": ["return", "returns", "คืนสินค้า", "คืนของ", "ส่งคืน", "ส่งสินค้าคืน", "ขอคืนสินค้า"],
+    "refund": ["refund", "refunds", "คืนเงิน", "เงินคืน", "ขอคืนเงิน"],
+    "exchange": ["exchange", "exchanges", "เปลี่ยนสินค้า", "เปลี่ยนไซส์", "เปลี่ยนสี"],
+    "shipping": ["shipping", "shipment", "delivery", "จัดส่ง", "ขนส่ง", "ส่งของ", "การจัดส่ง"],
+    "payment": ["payment", "payments", "ชำระเงิน", "จ่ายเงิน", "การชำระเงิน"],
+}
+
+# General policy questions ("What policies does SiamCart follow?", "store
+# policy", "นโยบายร้าน") → a grounded overview of every policy area.
+GENERAL_POLICY_KEYWORDS: List[str] = [
+    "policy", "policies", "store rules", "rules", "conditions", "terms",
+    "นโยบาย", "กฎของร้าน", "ข้อกำหนด", "เงื่อนไข",
+]
+
+# Customer-facing order for the general-policy overview.
+_OVERVIEW_POLICY_ORDER: List[str] = ["return", "refund", "exchange", "shipping", "payment"]
+
+
+def is_title_only_chunk(text: str) -> bool:
+    """True when a chunk is just a markdown heading with no policy body.
+
+    The index contains document-header chunks (e.g. "# Return Policy —
+    นโยบายการคืนสินค้า") that win embedding similarity for policy
+    questions but carry no policy content. They must never be used as
+    grounded evidence.
+    """
+    t = (text or "").strip()
+    if not t:
+        return True
+    if len(t) < 12:
+        return True
+    lines = [ln for ln in t.splitlines() if ln.strip()]
+    if len(lines) == 1 and lines[0].lstrip().startswith("#"):
+        return True
+    return False
+
+
+def _keyword_clause(chunk: Dict, distance: float) -> Dict:
+    """Convert a chunk dict into the same clause shape ChromaDB returns."""
+    return {
+        "text": chunk["text"],
+        "policy_type": chunk["policy_type"],
+        "source_filename": chunk["source_filename"],
+        "chunk_id": chunk["chunk_id"],
+        "section_title": chunk["section_title"],
+        "language": chunk["language"],
+        "distance": distance,
+    }
+
+
+def keyword_policy_retrieval(query: str) -> Dict:
+    """Deterministic keyword retrieval from the local policy markdown files.
+
+    Returns the same shape as retrieve_policy_clauses, plus:
+      - policy_type_hint: str | None — explicitly named policy type
+      - is_general_policy: bool — True when only general policy keywords matched
+
+    Priority inside this function:
+      1. explicit policy type named in the query → that policy's Thai sections;
+      2. general policy question → one Thai section per policy area (overview);
+      3. nothing matched → retrieval_success=False (caller falls back).
+    """
+    norm = (query or "").lower().strip()
+
+    hits: Dict[str, int] = {}
+    for ptype, kws in POLICY_TYPE_KEYWORDS.items():
+        hits[ptype] = sum(1 for kw in kws if kw.lower() in norm)
+    best_type = max(hits, key=hits.get) if any(hits.values()) else None
+    best_score = hits.get(best_type, 0) if best_type else 0
+
+    general = any(kw in norm for kw in GENERAL_POLICY_KEYWORDS)
+
+    try:
+        documents = load_policy_documents()
+        chunks = chunk_policy_documents(documents)
+    except Exception:
+        chunks = []
+    thai_by_type: Dict[str, List[Dict]] = {}
+    for c in chunks:
+        if c.get("language") == "th" and not is_title_only_chunk(c.get("text", "")):
+            thai_by_type.setdefault(c.get("policy_type", ""), []).append(c)
+
+    clauses: List[Dict] = []
+    is_general = False
+
+    if best_type and best_score > 0:
+        # Explicit policy type → its Thai sections, keyword-relevant first.
+        candidates = thai_by_type.get(best_type, [])
+        kws = POLICY_TYPE_KEYWORDS[best_type]
+
+        def _kw_hits(c: Dict) -> int:
+            return sum(1 for kw in kws if kw.lower() in c["text"].lower())
+
+        candidates = sorted(candidates, key=_kw_hits, reverse=True)
+        for c in candidates[:3]:
+            clauses.append(_keyword_clause(c, 0.0))
+    elif general:
+        # General policy question → overview: first Thai section per area.
+        is_general = True
+        for ptype in _OVERVIEW_POLICY_ORDER:
+            pool = thai_by_type.get(ptype, [])
+            if pool:
+                clauses.append(_keyword_clause(pool[0], 0.0))
+
+    return {
+        "query": query,
+        "retrieved_clauses": clauses,
+        "retrieval_success": len(clauses) > 0,
+        "total_chunks_in_index": len(chunks),
+        "policy_type_hint": best_type if best_score > 0 else None,
+        "is_general_policy": is_general,
+    }
+
+
 def get_policy_index_status(chroma_dir: Optional[str] = None) -> Dict:
     """Return the current status of the ChromaDB policy index."""
     if chroma_dir is None:

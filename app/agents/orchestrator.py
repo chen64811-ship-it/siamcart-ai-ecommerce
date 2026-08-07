@@ -50,6 +50,22 @@ _GREETING_RESPONSE = (
     "การจัดส่ง การคืนสินค้า หรือการคืนเงินได้เลยค่ะ"
 )
 
+# ── Intent-boundary hotfix: deterministic research/about response ──────
+# Static application metadata — no SQLite, no DeepSeek, no order ID.
+# Customer-facing response is always Thai.
+_RESEARCH_INFO_RESPONSE = (
+    "SiamCart เป็นระบบต้นแบบงานวิจัย (research prototype) ค่ะ "
+    "อยู่ภายใต้หัวข้องานวิจัย 'LLM-Powered Multi-Agent Customer Support "
+    "Framework for Thai E-commerce' โดยระบบนี้ประเมินกรอบงานหลายตัวแทน "
+    "(multi-agent framework) ทั้งหมด 3 ตัวแทน ได้แก่ Intelligent Router "
+    "(ตัวกำหนดเส้นทางอัจฉริยะ) Transaction Tracker (ผู้ติดตามธุรกรรมคำสั่งซื้อ) "
+    "และ Store Policy Evaluator (ผู้ประเมินนโยบายของร้าน) ค่ะ "
+    "ส่วนการค้นหาสินค้า (Product Catalog Lookup) เป็นส่วนเสริมสำหรับการสาธิต "
+    "เท่านั้น ไม่ใช่ตัวแทนที่ถูกประเมิน "
+    "ระบบนี้เป็นเพียงต้นแบบการวิจัย ไม่ใช่บริการเชิงพาณิชย์ "
+    "และข้อมูลบางส่วนเป็นข้อมูลจำลองสำหรับการสาธิตค่ะ"
+)
+
 _OUT_OF_SCOPE_RESPONSE = (
     "ขออภัย ผู้ช่วย AI ไม่สามารถดำเนินการเรื่องนี้ได้ "
     "และระบบยังไม่ได้บันทึกคำขอของคุณ "
@@ -1160,6 +1176,7 @@ def _safe_policy_query(query: str, top_k: int = 3) -> Dict:
             "agent": "store_policy_evaluator",
             "retrieved_clauses": [],
             "retrieval_success": False,
+            "retrieval_source": "unavailable",
             "policy_sources": [],
             "retrieved_chunk_count": 0,
             "top_similarity_score": 0.0,
@@ -1375,6 +1392,14 @@ def process_message(
     if intent == "GREETING":
         response_text = _GREETING_RESPONSE
 
+    elif intent == "RESEARCH_INFO":
+        # ── Deterministic research/about answer ──────────────────
+        # Static application metadata only — no SQLite, no DeepSeek,
+        # no order-ID request. An explicit new topic already cleared any
+        # pending workflow above; active_order_id stays as context but
+        # never hijacks the answer.
+        response_text = _RESEARCH_INFO_RESPONSE
+
     elif intent == "OUT_OF_SCOPE":
         _clear_pending(session_id)
         if _CANCEL_RE.search(message or ""):
@@ -1455,6 +1480,7 @@ def process_message(
             policy_evidence = {
                 "retrieved_clauses": retrieved_clauses,
                 "retrieval_success": policy_result.get("retrieval_success", False),
+                "retrieval_source": policy_result.get("retrieval_source", "chromadb"),
                 "policy_sources": policy_result.get("policy_sources", []),
                 "retrieved_chunk_count": policy_result.get("retrieved_chunk_count", 0),
                 "top_similarity_score": policy_result.get("top_similarity_score", 0.0),
@@ -1492,6 +1518,7 @@ def process_message(
         policy_evidence = {
             "retrieved_clauses": retrieved_clauses,
             "retrieval_success": policy_result.get("retrieval_success", False),
+            "retrieval_source": policy_result.get("retrieval_source", "chromadb"),
             "policy_sources": policy_result.get("policy_sources", []),
             "retrieved_chunk_count": policy_result.get("retrieved_chunk_count", 0),
             "top_similarity_score": policy_result.get("top_similarity_score", 0.0),
