@@ -1,0 +1,16 @@
+# Railway deployment configuration
+# See https://docs.railway.com/reference/config-as-code
+
+[deploy]
+# Health check: the app exposes GET /health returning 200.
+healthcheck_path = "/health"
+healthcheck_timeout_seconds = 300
+# Restart the container on failure so a crash recovers automatically.
+restart_policy_type = "ON_FAILURE"
+restart_policy_max_retries = 5
+
+# Runtime SQLite + ChromaDB live on the /data persistent volume.
+# The app honors STORE_DB_PATH / CHROMA_DIR from Railway variables.
+# volume_mounts:
+#   - path = "/data"
+#     mount_path = "/data"
