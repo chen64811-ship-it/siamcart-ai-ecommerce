@@ -11,11 +11,15 @@ import os
 import json
 import time
 import uuid
+import logging
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.encoders import jsonable_encoder
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -29,9 +33,15 @@ from app.agents.orchestrator import (
 )
 from app.agents.router import route_message
 from app.api.store_routes import router as store_router
+from app.api.auth_routes import router as auth_router
 from app.db import store as store_db
 from app.db.orders import database_available
-from app.config import DATA_DIR, LOGS_DIR, STATIC_DIR, DEEPSEEK_ENABLED
+from app.config import (
+    AUTH_REQUIRED, CORS_ORIGINS, DATA_DIR, LOGS_DIR, STATIC_DIR,
+    DEEPSEEK_ENABLED, JWT_SECRET_KEY,
+)
+from app.observability import configure_logging, request_context_middleware
+from app.security import get_current_user
 from app.services.product_catalog import classify_product_question, product_catalog_lookup
 
 # ── Application ──────────────────────────────────────────────────────
@@ -41,6 +51,16 @@ app = FastAPI(
     description="Single-agent Transaction Tracker with Thai e-commerce web UI",
     version="1.0.0",
 )
+configure_logging()
+app.middleware("http")(request_context_middleware)
+if CORS_ORIGINS:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=CORS_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["GET", "POST"],
+        allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
+    )
 
 # Ensure directories exist
 os.makedirs(STATIC_DIR, exist_ok=True)
@@ -52,6 +72,23 @@ app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 # Storefront APIs (products + real order creation) — Task 5C
 app.include_router(store_router)
+app.include_router(auth_router)
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(_request: Request, exc: HTTPException):
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail}, headers=exc.headers)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(_request: Request, exc: RequestValidationError):
+    return JSONResponse(status_code=422, content=jsonable_encoder({"detail": exc.errors()}))
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(_request: Request, exc: Exception):
+    logging.getLogger("siamcart.error").exception("unhandled_exception")
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
 # Jinja2 templates — using inline HTML to avoid version-specific LRU bugs
 templates_dir = Path(__file__).resolve().parent.parent / "templates"
@@ -193,16 +230,29 @@ def write_experiment_log(
 @app.on_event("startup")
 async def startup():
     """Ensure the orders database exists on startup."""
+    if AUTH_REQUIRED and (
+        JWT_SECRET_KEY == "change-me-in-production" or len(JWT_SECRET_KEY) < 32
+    ):
+        raise RuntimeError(
+            "JWT_SECRET_KEY must be a non-default value of at least 32 characters "
+            "when AUTH_REQUIRED=true"
+        )
+    from app.db.migrations import upgrade_database
     from app.db.orders import init_database
+    upgrade_database()
     init_database(DB_PATH)
     # Storefront schema (products, order_items, orders migration) — Task 5C
     store_db.STORE_DB_PATH = DB_PATH
     store_db.init_store_database(DB_PATH)
     # Tell orchestrator about the database path
     set_db_path(DB_PATH)
-    # Write a blank log header
-    with open(EXPERIMENT_LOG, "a", encoding="utf-8") as f:
-        pass  # just ensure file exists
+    # Logging storage is optional; a read-only filesystem must not prevent
+    # the API from starting because request logs still go to stdout.
+    try:
+        with open(EXPERIMENT_LOG, "a", encoding="utf-8"):
+            pass
+    except OSError:
+        logging.getLogger("siamcart.startup").warning("experiment_log_unavailable")
 
 
 @app.get("/health")
@@ -238,7 +288,10 @@ async def orders_page():
 
 
 @app.post("/api/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
+async def chat(
+    request: ChatRequest,
+    current_user: dict | None = Depends(get_current_user),
+):
     """Process a chat message through the Intelligent Router and agents.
 
     Task 5D-1: an optional product_id activates the deterministic Product
@@ -265,6 +318,17 @@ async def chat(request: ChatRequest):
 
     route = route_message(message)
     intent = route["intent"]
+
+    if current_user is not None:
+        candidate_order_id = (
+            route.get("extracted_order_id")
+            or request.order_id
+            or get_active_order_for_session(session_id)
+        )
+        if candidate_order_id and not store_db.user_owns_order(
+            store_db.STORE_DB_PATH, candidate_order_id, current_user["user_id"]
+        ):
+            raise HTTPException(status_code=404, detail=f"Order {candidate_order_id} not found")
 
     # Product Catalog Lookup — deterministic storefront demo extension.
     # It is NOT one of the three evaluated agents. With a product context
@@ -319,6 +383,15 @@ async def chat(request: ChatRequest):
 
     # Write experiment log
     write_experiment_log(session_id, message, result)
+    logging.getLogger("siamcart.chat").info(
+        "chat_processed",
+        extra={
+            "intent": result.get("intent"),
+            "order_id": result.get("order_id"),
+            "latency_ms": result.get("latency_ms", 0),
+            "status": 200,
+        },
+    )
 
     return ChatResponse(
         session_id=result["session_id"],

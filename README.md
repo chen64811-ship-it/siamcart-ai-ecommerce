@@ -7,13 +7,15 @@
 ![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
 ![Railway](https://img.shields.io/badge/Railway-0B0D0E?logo=railway&logoColor=white)
 ![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)
+[![CI](https://github.com/chen64811-ship-it/siamcart-ai-ecommerce/actions/workflows/ci.yml/badge.svg)](https://github.com/chen64811-ship-it/siamcart-ai-ecommerce/actions/workflows/ci.yml)
 
 **Live Demo:** https://web-production-1ea79.up.railway.app
 **GitHub:** https://github.com/chen64811-ship-it/siamcart-ai-ecommerce
 
 SiamCart is a deployed research prototype for Thai e-commerce customer support.
 It combines deterministic transaction processing, policy retrieval, persistent
-multi-turn context, and an optional LLM layer inside a FastAPI-based multi-agent
+multi-turn context, JWT-based order ownership, and an optional LLM layer inside a FastAPI-based multi-agent
 framework.
 
 ## Live Demo
@@ -29,7 +31,7 @@ Try it: https://web-production-1ea79.up.railway.app
 The evaluated framework (M.Sc. thesis study) consists of three agents:
 
 - **Intelligent Router** — deterministic intent classification and routing.
-- **Transaction Tracker** — SQLite-backed order/payment/shipment facts.
+- **Transaction Tracker** — SQLite/PostgreSQL-backed order/payment/shipment facts.
 - **Store Policy Evaluator** — RAG retrieval over store policy documents.
 
 Additional components:
@@ -43,7 +45,8 @@ Deployment:
 
 - Docker containerization
 - Railway hosting with a persistent `/data` volume
-- SQLite database and ChromaDB index stored on the persistent volume
+- SQLite for local/demo use; PostgreSQL plus Alembic migrations for production
+- ChromaDB index stored on persistent storage
 
 ## Demo Customer Journey
 
@@ -84,6 +87,9 @@ No real payment or courier transaction occurs.
 - Docker containerization
 - Railway deployment with persistent volume
 - automated focused and regression testing
+- JWT registration/login and customer-scoped order access
+- structured JSON logging with request IDs and latency
+- GitHub Actions compile, migration, test, JavaScript, and Docker checks
 
 ## Reliability
 
@@ -105,7 +111,8 @@ No real payment or courier transaction occurs.
 - Simulated refund — no real money is transferred.
 - Simulated shipment and tracking — no real courier integration, no real
   tracking API, no ETA prediction.
-- No production authentication (research prototype only).
+- Authentication is disabled on the public research demo by default; production
+  deployments can enforce JWT authentication with `AUTH_REQUIRED=true`.
 - Optional DeepSeek layer — deterministic pipeline works without it; the LLM
   is an optional response-generation/fallback layer.
 - Customer-facing responses are generated in Thai by a deterministic
@@ -116,6 +123,9 @@ No real payment or courier transaction occurs.
 - Python
 - FastAPI
 - SQLite
+- PostgreSQL
+- Alembic / SQLAlchemy migration metadata
+- JWT / Argon2 password hashing
 - ChromaDB
 - DeepSeek (optional LLM formatter)
 - Vanilla JavaScript
@@ -162,6 +172,17 @@ python -m uvicorn app.api.server:app --host 0.0.0.0 --port 8000
 Open http://localhost:8000 — the database, schema, products, and demo seed
 data initialize automatically on first startup.
 
+Create and apply schema migrations:
+
+```bash
+alembic revision --autogenerate -m "describe schema change"
+alembic upgrade head
+```
+
+Local development defaults to SQLite. In production, set `DATABASE_URL` to a
+PostgreSQL connection string. The Docker startup command applies migrations
+before starting Uvicorn.
+
 ## Environment Variables
 
 All configuration is read from `.env` (see `.env.example` — variable names
@@ -175,6 +196,32 @@ only, no secrets). The important ones:
 | `DEEPSEEK_BASE_URL` | `https://api.deepseek.com` | LLM endpoint |
 | `DEEPSEEK_TIMEOUT_SECONDS` | `8` | LLM timeout |
 | `EMBEDDING_MODEL` | sentence-transformers paraphrase-multilingual-MiniLM-L12-v2 | RAG embedding model |
+| `DATABASE_URL` | `sqlite:///data/orders.db` | SQLite locally or PostgreSQL in production |
+| `AUTH_REQUIRED` | `false` | Require JWT for order and chat ownership checks |
+| `JWT_SECRET_KEY` | development placeholder | JWT signing secret; required when auth is enforced |
+| `JWT_ACCESS_TOKEN_MINUTES` | `30` | Access-token lifetime |
+| `CORS_ORIGINS` | *(empty)* | Comma-separated allowed browser origins |
+
+## Authentication
+
+The lightweight auth API provides `POST /api/auth/register`, `POST
+/api/auth/login`, and `GET /api/auth/me`. Send the resulting token as:
+
+```http
+Authorization: Bearer <access_token>
+```
+
+Authenticated orders store `orders.user_id`. List, detail, payment,
+cancellation, shipment, delivery, and order-aware chat operations verify that
+the order belongs to the current user. Cross-customer lookups return 404 so the
+API does not disclose whether another customer's order exists.
+
+## Observability
+
+Every request receives an `X-Request-ID` response header. Logs are emitted as
+JSON with `request_id`, method, path, latency, and status; chat completion logs
+also include intent and order ID. Validation errors, expected HTTP failures,
+and unexpected exceptions use centralized handlers.
 
 ## Tests
 
@@ -191,7 +238,7 @@ touched by tests):
 app/
   agents/        # router, transaction tracker, policy evaluator, orchestrator
   api/           # FastAPI app and storefront routes
-  db/            # SQLite schema, migrations, product seed
+  db/            # SQLite/PostgreSQL repositories, migration metadata, seed
   models/        # Pydantic request models
   services/      # deterministic product catalog lookup
   static/        # frontend JS/CSS/images
@@ -199,4 +246,18 @@ app/
 data/
   policies/      # store policy documents (required by the app)
 tests/           # focused pytest suites
+alembic/         # versioned SQLite/PostgreSQL schema migrations
+.github/workflows/ci.yml  # compile, migration, test, JS, Docker CI
 ```
+
+## Security Considerations
+
+- Passwords are hashed with Argon2; plaintext passwords are never stored.
+- JWT secrets come from environment variables, and enforced auth rejects the
+  development placeholder at startup.
+- Order ownership is enforced server-side rather than trusting email, phone,
+  session IDs, or browser-provided order data.
+- SQL statements remain parameterized across PostgreSQL and SQLite.
+- CORS is same-origin by default and can be allow-listed with `CORS_ORIGINS`.
+- Responses include `nosniff`, clickjacking, and referrer-policy headers.
+- Request logs avoid authentication tokens and password fields.

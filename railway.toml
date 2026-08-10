@@ -9,8 +9,9 @@ healthcheck_timeout_seconds = 300
 restart_policy_type = "ON_FAILURE"
 restart_policy_max_retries = 5
 
-# Runtime SQLite + ChromaDB live on the /data persistent volume.
-# The app honors STORE_DB_PATH / CHROMA_DIR from Railway variables.
+# PostgreSQL production: attach Railway Postgres and set DATABASE_URL from
+# its reference variable. Alembic runs before the web process starts.
+# SQLite demo mode may still keep the runtime DB on a /data volume.
 # volume_mounts:
 #   - path = "/data"
 #     mount_path = "/data"

@@ -60,10 +60,12 @@ def main():
 
 def _init_databases():
     """Initialize the order database."""
+    from app.db.migrations import upgrade_database
     from app.db.orders import init_database
-    from app.config import DATA_DIR
-    db_path = str(DATA_DIR / "orders.db")
+    from app.config import STORE_DB_PATH
+    db_path = STORE_DB_PATH
     print("Initializing order database...")
+    upgrade_database()
     init_database(db_path)
     print(f"Done! Orders DB: {db_path}")
 

@@ -8,21 +8,6 @@ from dotenv import load_dotenv
 _env_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(_env_path)
 
-# Debug: write config state for runtime verification
-_debug_key = os.environ.get("DEEPSEEK_API_KEY", "")
-try:
-    _log_dir = Path(__file__).resolve().parent.parent / "logs"
-    _log_dir.mkdir(parents=True, exist_ok=True)
-    with open(_log_dir / "config_debug.log", "w") as _f:
-        _f.write(f"ENV file: {_env_path} (exists={_env_path.exists()})\n")
-        _f.write(f"DEEPSEEK_ENABLED: {os.environ.get('DEEPSEEK_ENABLED')}\n")
-        _f.write(f"DEEPSEEK_API_KEY set: {bool(_debug_key)}\n")
-        _f.write(f"DEEPSEEK_API_KEY len: {len(_debug_key)}\n")
-        _f.write(f"DEEPSEEK_API_KEY first 12: {_debug_key[:12] if _debug_key else 'EMPTY'}\n")
-        _f.write(f"os.environ DEEPSEEK keys: {[k for k in os.environ if 'DEEPSEEK' in k]}\n")
-except Exception:
-    pass  # debug logging must not crash config
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ── DeepSeek LLM Generator (Phase 4A) ─────────────────────────────────
@@ -52,7 +37,23 @@ CHROMA_DB_DIR = os.getenv("CHROMA_DIR", str(BASE_DIR / "data" / "chroma"))
 STORE_DB_PATH = os.getenv("STORE_DB_PATH", str(BASE_DIR / "data" / "orders.db"))
 
 # Database
-DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{STORE_DB_PATH}")
+DATABASE_URL = os.getenv(
+    "DATABASE_URL", f"sqlite:///{Path(STORE_DB_PATH).as_posix()}"
+)
+
+# Authentication is optional for the public research demo and mandatory when
+# explicitly enabled in production.
+AUTH_REQUIRED = os.getenv("AUTH_REQUIRED", "false").lower() == "true"
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "change-me-in-production")
+JWT_ALGORITHM = "HS256"
+JWT_ACCESS_TOKEN_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_MINUTES", "30"))
+
+# Comma-separated browser origins. Empty means same-origin only.
+CORS_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("CORS_ORIGINS", "").split(",")
+    if origin.strip()
+]
 
 # Session
 SESSION_EXPIRE_MINUTES = 30

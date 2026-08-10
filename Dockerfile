@@ -11,6 +11,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app ./app
 COPY run.py .
 COPY pytest.ini .
+COPY alembic.ini .
+COPY alembic ./alembic
 
 # Store policy documents are read at runtime by the policy evaluator.
 # The runtime SQLite DB and Chroma index are intentionally NOT copied —
@@ -32,4 +34,4 @@ EXPOSE 8000
 
 # Listen on $PORT when provided by the platform (Railway/Render/Fly),
 # defaulting to 8000 locally.
-CMD ["sh", "-c", "python -m uvicorn app.api.server:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "python -m alembic upgrade head && python -m uvicorn app.api.server:app --host 0.0.0.0 --port ${PORT:-8000}"]

@@ -5,10 +5,10 @@ Read-only parameterized queries. Never performs INSERT, UPDATE, DELETE, or DDL
 after initialisation. Initialisation is idempotent.
 """
 
-import sqlite3
 import os
 from typing import Dict, Optional, List, Any
 from pathlib import Path
+from app.db.connection import connect_database, is_postgres_connection
 
 # Schema columns expected by the spec
 ORDER_COLUMNS = [
@@ -94,7 +94,7 @@ def init_database(db_path: str) -> None:
     Idempotent — uses CREATE TABLE IF NOT EXISTS and INSERT OR IGNORE so
     repeated calls do not duplicate rows.
     """
-    conn = sqlite3.connect(db_path)
+    conn = connect_database(db_path, write=True)
     cursor = conn.cursor()
 
     cursor.execute(f"""
@@ -112,13 +112,15 @@ def init_database(db_path: str) -> None:
         )
     """)
 
+    insert_prefix = "INSERT INTO" if is_postgres_connection(conn) else "INSERT OR IGNORE INTO"
+    conflict_suffix = " ON CONFLICT (order_id) DO NOTHING" if is_postgres_connection(conn) else ""
     for row in SAMPLE_ORDERS:
         cursor.execute(
-            """INSERT OR IGNORE INTO orders
+            f"""{insert_prefix} orders
                (order_id, customer_name, product_name, order_status,
                 payment_status, shipment_status, tracking_number,
                 shipping_provider, purchase_date, estimated_delivery_date)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?){conflict_suffix}""",
             (
                 row["order_id"],
                 row["customer_name"],
@@ -149,8 +151,7 @@ def query_order(db_path: str, order_id: str) -> Optional[Dict[str, Any]]:
     Returns None when the order does not exist.
     This is a read-only parameterised query.
     """
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
+    conn = connect_database(db_path)
     cursor = conn.cursor()
     cursor.execute(
         "SELECT * FROM orders WHERE order_id = ?", (order_id,)
@@ -162,10 +163,8 @@ def query_order(db_path: str, order_id: str) -> Optional[Dict[str, Any]]:
 
 def database_available(db_path: str) -> bool:
     """Return True if the database file exists and contains orders."""
-    if not os.path.isfile(db_path):
-        return False
     try:
-        conn = sqlite3.connect(db_path)
+        conn = connect_database(db_path)
         cursor = conn.cursor()
         cursor.execute("SELECT COUNT(*) FROM orders")
         count = cursor.fetchone()[0]

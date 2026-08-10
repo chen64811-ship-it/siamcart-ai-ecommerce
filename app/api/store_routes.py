@@ -20,7 +20,7 @@ X-Elapsed-Ms response header.
 import time
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
 from app.db import store as store_db
 from app.models.store import (
@@ -31,12 +31,21 @@ from app.models.store import (
     OrderCreateRequest,
     ShipDemoRequest,
 )
+from app.security import get_current_user
 
 router = APIRouter()
 
 
 def _with_elapsed(response: Response, start: float) -> None:
     response.headers["X-Elapsed-Ms"] = f"{round((time.perf_counter() - start) * 1000, 2)}"
+
+
+def _ensure_order_access(order_id: str, user: dict | None) -> None:
+    if user is not None and not store_db.user_owns_order(
+        store_db.STORE_DB_PATH, order_id, user["user_id"]
+    ):
+        # Do not reveal whether another customer's order exists.
+        raise HTTPException(status_code=404, detail=f"Order {order_id.strip()} not found")
 
 
 # ── Products ───────────────────────────────────────────────────────────
@@ -80,7 +89,11 @@ async def get_product(product_id: str, response: Response):
 
 
 @router.post("/api/orders", status_code=201)
-async def create_order(request: OrderCreateRequest, response: Response):
+async def create_order(
+    request: OrderCreateRequest,
+    response: Response,
+    current_user: dict | None = Depends(get_current_user),
+):
     """Create a real order: one SQLite transaction, server-side pricing."""
     start = time.perf_counter()
 
@@ -101,6 +114,7 @@ async def create_order(request: OrderCreateRequest, response: Response):
         "province": request.province.strip(),
         "postal_code": request.postal_code.strip(),
         "payment_method": request.payment_method.strip(),
+        "user_id": current_user["user_id"] if current_user else None,
     }
 
     try:
@@ -120,6 +134,7 @@ async def list_orders(
     phone: Optional[str] = Query(default=None),
     order_id: Optional[str] = Query(default=None),
     limit: Optional[int] = Query(default=None),
+    current_user: dict | None = Depends(get_current_user),
 ):
     """Return order summaries (newest first) with items and product images.
 
@@ -134,13 +149,19 @@ async def list_orders(
         phone=phone,
         order_id=order_id,
         limit=limit if limit is not None else 20,
+        user_id=current_user["user_id"] if current_user else None,
     )
     _with_elapsed(response, start)
     return {"orders": orders, "count": len(orders)}
 
 
 @router.post("/api/orders/{order_id}/demo-payment")
-async def demo_payment(order_id: str, request: DemoPaymentRequest, response: Response):
+async def demo_payment(
+    order_id: str,
+    request: DemoPaymentRequest,
+    response: Response,
+    current_user: dict | None = Depends(get_current_user),
+):
     """Explicitly labelled research-only payment simulation.
 
     Never accepts card numbers (the body model has no card fields). Only an
@@ -148,6 +169,7 @@ async def demo_payment(order_id: str, request: DemoPaymentRequest, response: Res
     Cash on Delivery always stays pending.
     """
     start = time.perf_counter()
+    _ensure_order_access(order_id, current_user)
     if not request.confirm_demo_payment:
         raise HTTPException(
             status_code=400, detail="confirm_demo_payment must be true"
@@ -181,9 +203,14 @@ async def demo_payment(order_id: str, request: DemoPaymentRequest, response: Res
 
 
 @router.get("/api/orders/{order_id}")
-async def get_order(order_id: str, response: Response):
+async def get_order(
+    order_id: str,
+    response: Response,
+    current_user: dict | None = Depends(get_current_user),
+):
     """Return order details + items; 404 when the order does not exist."""
     start = time.perf_counter()
+    _ensure_order_access(order_id, current_user)
     order = store_db.get_order_with_items(store_db.STORE_DB_PATH, order_id)
     if order is None:
         raise HTTPException(
@@ -194,7 +221,12 @@ async def get_order(order_id: str, response: Response):
 
 
 @router.post("/api/orders/{order_id}/cancel-demo")
-async def cancel_demo(order_id: str, request: CancelDemoRequest, response: Response):
+async def cancel_demo(
+    order_id: str,
+    request: CancelDemoRequest,
+    response: Response,
+    current_user: dict | None = Depends(get_current_user),
+):
     """Deterministic demo cancellation — simulated refund, no real money.
 
     Without confirm=true the endpoint returns confirmation_required=true
@@ -202,6 +234,7 @@ async def cancel_demo(order_id: str, request: CancelDemoRequest, response: Respo
     deterministic service used by the AI cancellation flow.
     """
     start = time.perf_counter()
+    _ensure_order_access(order_id, current_user)
     if not request.confirm:
         _with_elapsed(response, start)
         return {
@@ -237,7 +270,12 @@ async def cancel_demo(order_id: str, request: CancelDemoRequest, response: Respo
 
 
 @router.post("/api/orders/{order_id}/ship-demo")
-async def ship_demo(order_id: str, request: ShipDemoRequest, response: Response):
+async def ship_demo(
+    order_id: str,
+    request: ShipDemoRequest,
+    response: Response,
+    current_user: dict | None = Depends(get_current_user),
+):
     """Explicitly labelled research-only shipment simulation (Task 8C).
 
     Moves a processing order to shipped, generates a realistic demo
@@ -246,6 +284,7 @@ async def ship_demo(order_id: str, request: ShipDemoRequest, response: Response)
     message is ever sent; the endpoint only writes to the demo SQLite DB.
     """
     start = time.perf_counter()
+    _ensure_order_access(order_id, current_user)
     if not request.confirm_demo_shipment:
         raise HTTPException(
             status_code=400, detail="confirm_demo_shipment must be true"
@@ -276,7 +315,12 @@ async def ship_demo(order_id: str, request: ShipDemoRequest, response: Response)
 
 
 @router.post("/api/orders/{order_id}/demo-shipment")
-async def demo_shipment(order_id: str, request: DemoShipmentRequest, response: Response):
+async def demo_shipment(
+    order_id: str,
+    request: DemoShipmentRequest,
+    response: Response,
+    current_user: dict | None = Depends(get_current_user),
+):
     """Task 8D — simulate shipment: Not Shipped -> In Transit.
 
     Research simulation only — no real courier service is connected. Sets
@@ -285,6 +329,7 @@ async def demo_shipment(order_id: str, request: DemoShipmentRequest, response: R
     every later query). Idempotent; payment_status never changes.
     """
     start = time.perf_counter()
+    _ensure_order_access(order_id, current_user)
     if not request.confirm_demo_shipment:
         raise HTTPException(
             status_code=400, detail="confirm_demo_shipment must be true"
@@ -316,7 +361,12 @@ async def demo_shipment(order_id: str, request: DemoShipmentRequest, response: R
 
 
 @router.post("/api/orders/{order_id}/demo-delivery")
-async def demo_delivery(order_id: str, request: DemoDeliveryRequest, response: Response):
+async def demo_delivery(
+    order_id: str,
+    request: DemoDeliveryRequest,
+    response: Response,
+    current_user: dict | None = Depends(get_current_user),
+):
     """Task 8D — mark delivered: In Transit -> Delivered.
 
     Research simulation only. Sets shipment_status='delivered',
@@ -324,6 +374,7 @@ async def demo_delivery(order_id: str, request: DemoDeliveryRequest, response: R
     not-shipped parcel cannot jump straight to delivered.
     """
     start = time.perf_counter()
+    _ensure_order_access(order_id, current_user)
     if not request.confirm_demo_delivery:
         raise HTTPException(
             status_code=400, detail="confirm_demo_delivery must be true"
