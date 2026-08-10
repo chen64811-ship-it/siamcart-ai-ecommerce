@@ -1,5 +1,7 @@
 """Focused tests for migrations, JWT ownership, and request tracing."""
 
+import logging
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 
@@ -20,6 +22,17 @@ def v2_database(tmp_path, monkeypatch):
     upgrade_database()
     init_database(str(path))
     return path
+
+
+def test_programmatic_migration_preserves_application_logging(v2_database):
+    root_logger = logging.getLogger()
+    handlers_before = list(root_logger.handlers)
+    level_before = root_logger.level
+
+    upgrade_database()
+
+    assert root_logger.handlers == handlers_before
+    assert root_logger.level == level_before
 
 
 @pytest.mark.asyncio

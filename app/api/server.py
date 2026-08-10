@@ -238,14 +238,24 @@ async def startup():
             "when AUTH_REQUIRED=true"
         )
     from app.db.migrations import upgrade_database
+    from app.db.connection import database_url_for, is_postgres_url
     from app.db.orders import init_database
     upgrade_database()
+    database_backend = (
+        "postgresql" if is_postgres_url(database_url_for(DB_PATH)) else "sqlite"
+    )
+    logging.getLogger("siamcart.startup").info(
+        "migration_completed", extra={"database": database_backend}
+    )
     init_database(DB_PATH)
     # Storefront schema (products, order_items, orders migration) — Task 5C
     store_db.STORE_DB_PATH = DB_PATH
     store_db.init_store_database(DB_PATH)
     # Tell orchestrator about the database path
     set_db_path(DB_PATH)
+    logging.getLogger("siamcart.startup").info(
+        "database_connected", extra={"database": database_backend}
+    )
     # Logging storage is optional; a read-only filesystem must not prevent
     # the API from starting because request logs still go to stdout.
     try:
