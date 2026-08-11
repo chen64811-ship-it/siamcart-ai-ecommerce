@@ -411,6 +411,7 @@
     function sendMessage() {
         var message = el.input.value.trim();
         if (!message || state.isSending) return;
+        if (!canUseAuthenticatedChat()) return;
         _doSend(message);
         el.input.value = "";
         autoResize();
@@ -418,7 +419,16 @@
 
     function sendText(text) {
         if (state.isSending) return;
+        if (!canUseAuthenticatedChat()) return;
         _doSend(String(text));
+    }
+
+    function canUseAuthenticatedChat() {
+        if (window.SiamCartAuth && window.SiamCartAuth.isRequired() && !window.SiamCartAuth.isAuthenticated()) {
+            window.SiamCartAuth.openLogin("Sign in or use Demo Login to chat about your orders.");
+            return false;
+        }
+        return true;
     }
 
     function _doSend(message) {

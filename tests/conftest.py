@@ -14,6 +14,13 @@ from unittest.mock import patch
 
 import pytest
 
+# Tests must never inherit production integrations from a developer's .env.
+# Individual tests may still monkeypatch app.config when explicitly exercising
+# an enabled feature.
+os.environ["DEEPSEEK_ENABLED"] = "false"
+os.environ["DEEPSEEK_API_KEY"] = ""
+os.environ["AUTH_REQUIRED"] = "false"
+
 # ── Mock embedding model ────────────────────────────────────────────
 
 EMBEDDING_DIM = 384  # matches paraphrase-multilingual-MiniLM-L12-v2

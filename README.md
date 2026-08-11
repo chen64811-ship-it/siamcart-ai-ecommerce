@@ -198,6 +198,7 @@ only, no secrets). The important ones:
 | `EMBEDDING_MODEL` | sentence-transformers paraphrase-multilingual-MiniLM-L12-v2 | RAG embedding model |
 | `DATABASE_URL` | `sqlite:///data/orders.db` | SQLite locally or PostgreSQL in production |
 | `AUTH_REQUIRED` | `false` | Require JWT for order and chat ownership checks |
+| `DEMO_LOGIN_ENABLED` | `false` | Enable the explicit one-click portfolio demo account |
 | `JWT_SECRET_KEY` | development placeholder | JWT signing secret; required when auth is enforced |
 | `JWT_ACCESS_TOKEN_MINUTES` | `30` | Access-token lifetime |
 | `CORS_ORIGINS` | *(empty)* | Comma-separated allowed browser origins |
@@ -205,7 +206,9 @@ only, no secrets). The important ones:
 ## Authentication
 
 The lightweight auth API provides `POST /api/auth/register`, `POST
-/api/auth/login`, and `GET /api/auth/me`. Send the resulting token as:
+/api/auth/login`, and `GET /api/auth/me`. The browser UI includes Login and
+Register forms, stores the short-lived access token in `sessionStorage`, and
+automatically adds it to same-origin API requests as:
 
 ```http
 Authorization: Bearer <access_token>
@@ -216,6 +219,11 @@ cancellation, shipment, delivery, and order-aware chat operations verify that
 the order belongs to the current user. Cross-customer lookups return 404 so the
 API does not disclose whether another customer's order exists.
 
+Public portfolio deployments may explicitly set `DEMO_LOGIN_ENABLED=true` to
+show a one-click Demo Login. `POST /api/auth/demo` then issues a token for a
+shared, clearly labelled demo account without publishing a reusable password.
+The endpoint returns 404 everywhere else.
+
 ## Observability
 
 Every request receives an `X-Request-ID` response header. Logs are emitted as
@@ -225,12 +233,17 @@ and unexpected exceptions use centralized handlers.
 
 ## Tests
 
-Focused suites (temporary SQLite only — the real runtime database is never
-touched by tests):
+The default command runs the maintained production-facing regression suite
+defined in `pytest.ini`. Tests force external LLM calls off and use temporary
+SQLite databases, so the real runtime database and API quota are never touched:
 
 ```bash
-.venv\Scripts\python.exe -m pytest tests/test_demo_shipment_lifecycle.py -v
+.venv\Scripts\python.exe -m pytest -q
 ```
+
+Earlier thesis-phase test modules remain available for targeted historical
+audits, but they are not mixed into the Backend V2 release gate because several
+encode superseded UI, routing, and embedding assumptions.
 
 ## Project Layout
 
@@ -255,6 +268,8 @@ alembic/         # versioned SQLite/PostgreSQL schema migrations
 - Passwords are hashed with Argon2; plaintext passwords are never stored.
 - JWT secrets come from environment variables, and enforced auth rejects the
   development placeholder at startup.
+- Browser access tokens use tab-scoped `sessionStorage`; a 401 response clears
+  the token and prompts for authentication again.
 - Order ownership is enforced server-side rather than trusting email, phone,
   session IDs, or browser-provided order data.
 - SQL statements remain parameterized across PostgreSQL and SQLite.

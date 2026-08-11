@@ -207,7 +207,7 @@ async def _chat(client, message, session_id):
 # ── fixtures ───────────────────────────────────────────────────────────
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="module", autouse=True)
 def tmp_db():
     fd, path = tempfile.mkstemp(suffix=".db")
     os.close(fd)

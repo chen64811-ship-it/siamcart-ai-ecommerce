@@ -2788,3 +2788,163 @@ body.modal-open { overflow: hidden; }
 @media (max-width: 900px) {
     .od-grid-3 { grid-template-columns: 1fr; }
 }
+
+/* ── Browser authentication flow ─────────────────────────────── */
+.auth-status-button {
+    max-width: 190px;
+    min-height: 40px;
+    padding: 0 14px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+}
+.auth-status-button:hover,
+.auth-status-button:focus-visible {
+    border-color: var(--brand);
+    color: var(--brand);
+    outline: none;
+}
+.auth-status-button.is-authenticated {
+    border-color: #B9E2CF;
+    background: #EEF9F4;
+    color: #176B4A;
+}
+
+.auth-backdrop { z-index: 1200; }
+.auth-modal {
+    width: min(460px, calc(100% - 32px));
+    max-height: calc(100vh - 32px);
+    padding: 30px;
+}
+.auth-brand {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding-right: 42px;
+    margin-bottom: 24px;
+}
+.auth-brand-mark {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    flex: none;
+    border-radius: 11px;
+    background: var(--brand);
+    color: #fff;
+    font-weight: 800;
+}
+.auth-brand strong,
+.auth-brand span { display: block; }
+.auth-brand strong { color: var(--text); font-size: 14px; }
+.auth-brand div > span { color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+.auth-modal h2 { margin: 0; color: var(--text); font-size: 25px; }
+.auth-lead { margin: 8px 0 20px; color: var(--muted); line-height: 1.55; font-size: 14px; }
+.auth-message {
+    margin: -8px 0 18px;
+    padding: 10px 12px;
+    border: 1px solid #F0D494;
+    border-radius: 10px;
+    background: #FFF9E9;
+    color: #77540D;
+    font-size: 13px;
+    line-height: 1.45;
+}
+.auth-demo-button { width: 100%; min-height: 48px; font-weight: 800; }
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 18px 0;
+    color: var(--muted);
+    font-size: 11.5px;
+}
+.auth-divider::before,
+.auth-divider::after { content: ""; height: 1px; flex: 1; background: var(--border); }
+.auth-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 10px;
+    background: #F2F4F7;
+    margin-bottom: 17px;
+}
+.auth-tabs button {
+    min-height: 38px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.auth-tabs button[aria-selected="true"] {
+    background: #fff;
+    color: var(--brand);
+    box-shadow: 0 1px 4px rgba(21, 37, 62, .12);
+}
+.auth-form { display: flex; flex-direction: column; gap: 13px; }
+.auth-form[hidden] { display: none; }
+.auth-form label { color: var(--text); font-size: 12.5px; font-weight: 700; }
+.auth-form input {
+    display: block;
+    width: 100%;
+    height: 44px;
+    margin-top: 6px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: #fff;
+    color: var(--text);
+    font: inherit;
+}
+.auth-form input:focus { border-color: var(--brand); outline: 3px solid rgba(35, 82, 130, .12); }
+.auth-field-hint { margin: -7px 0 0; color: var(--muted); font-size: 11.5px; }
+.auth-error {
+    margin: 12px 0 0;
+    padding: 9px 11px;
+    border-radius: 8px;
+    background: #FFF0F0;
+    color: #A22929;
+    font-size: 12.5px;
+}
+.auth-security-note { margin: 16px 0 0; color: var(--muted); font-size: 11px; line-height: 1.45; text-align: center; }
+.auth-account { text-align: center; padding: 10px 0 4px; }
+.auth-avatar {
+    display: grid;
+    place-items: center;
+    width: 68px;
+    height: 68px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    background: #EEF4FA;
+    color: var(--brand);
+    font-size: 28px;
+    font-weight: 800;
+}
+.auth-account p { margin: 6px 0 20px; color: var(--muted); font-size: 13.5px; }
+.auth-account-actions { display: grid; gap: 10px; }
+
+input[data-auth-owned="true"] { background: #F5F7FA; color: #4C596A; }
+
+@media (max-width: 640px) {
+    .auth-status-button { max-width: 112px; padding: 0 10px; font-size: 12px; }
+    .auth-modal {
+        width: 100%;
+        height: 100%;
+        max-height: 100%;
+        border-radius: 0;
+        padding: 24px 20px;
+    }
+}

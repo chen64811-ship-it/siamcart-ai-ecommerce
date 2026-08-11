@@ -548,6 +548,7 @@
         renderProductList();
         el.success.hidden = true;
         el.builder.hidden = false;
+        if (window.SiamCartAuth) window.SiamCartAuth.applyUserToForms();
     }
 
     /* ═══════════════════════════════════════════════════════════
@@ -607,6 +608,10 @@
     el.form.addEventListener("submit", function (e) {
         e.preventDefault();
         if (state.submitting) return;
+        if (window.SiamCartAuth && window.SiamCartAuth.isRequired() && !window.SiamCartAuth.isAuthenticated()) {
+            window.SiamCartAuth.openLogin("Sign in or use Demo Login to create an order.");
+            return;
+        }
         if (!Object.keys(state.selected).length) {
             showToast("Select at least one product first", "error");
             return;
@@ -658,13 +663,11 @@
     el.successView.addEventListener("click", function () {
         var orderId = state.lastOrder && (state.lastOrder.order_id || state.lastOrder.id);
         if (!orderId) return;
-        window.open("/api/orders/" + encodeURIComponent(orderId), "_blank", "noopener");
+        window.location.href = "/orders?order_id=" + encodeURIComponent(orderId);
     });
 
     el.successViewOrders.addEventListener("click", function () {
-        var emailInput = document.getElementById("coEmail");
-        var email = emailInput ? emailInput.value.trim() : "";
-        window.location.href = "/orders?email=" + encodeURIComponent(email);
+        window.location.href = "/orders";
     });
 
     el.successAgain.addEventListener("click", function () {
@@ -678,4 +681,7 @@
     fetchProducts();
     renderProductList();
     renderSelected();
+    if (window.SiamCartAuth) {
+        window.SiamCartAuth.ready().then(window.SiamCartAuth.applyUserToForms);
+    }
 })();

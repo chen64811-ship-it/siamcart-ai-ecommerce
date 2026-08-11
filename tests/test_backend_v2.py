@@ -71,6 +71,33 @@ async def test_jwt_users_can_only_access_their_own_orders(v2_database):
 
 
 @pytest.mark.asyncio
+async def test_demo_login_is_explicit_and_reuses_labelled_account(v2_database, monkeypatch):
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        monkeypatch.setattr(config, "DEMO_LOGIN_ENABLED", False)
+        disabled_config = await client.get("/api/auth/config")
+        assert disabled_config.status_code == 200
+        assert disabled_config.json() == {
+            "auth_required": True,
+            "demo_login_enabled": False,
+        }
+        assert (await client.post("/api/auth/demo")).status_code == 404
+
+        monkeypatch.setattr(config, "DEMO_LOGIN_ENABLED", True)
+        first = await client.post("/api/auth/demo")
+        second = await client.post("/api/auth/demo")
+        assert first.status_code == second.status_code == 200
+        assert first.json()["user"]["email"] == "demo@siamcart.app"
+        assert first.json()["user"]["display_name"] == "SiamCart Demo Shopper"
+        assert first.json()["user"]["user_id"] == second.json()["user"]["user_id"]
+
+        headers = {"Authorization": f"Bearer {first.json()['access_token']}"}
+        me = await client.get("/api/auth/me", headers=headers)
+        assert me.status_code == 200
+        assert me.json()["user_id"] == first.json()["user"]["user_id"]
+
+
+@pytest.mark.asyncio
 async def test_request_id_is_echoed_and_security_headers_are_set(monkeypatch):
     monkeypatch.setattr(config, "AUTH_REQUIRED", False)
     transport = ASGITransport(app=app)

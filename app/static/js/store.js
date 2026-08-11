@@ -688,7 +688,12 @@ var PRODUCTS_LOADED = false;
             showToast("Your cart is empty — add a product first", "error");
             return;
         }
+        if (window.SiamCartAuth && window.SiamCartAuth.isRequired() && !window.SiamCartAuth.isAuthenticated()) {
+            window.SiamCartAuth.openLogin("Sign in or use Demo Login before checkout.");
+            return;
+        }
         resetCheckoutForm();
+        if (window.SiamCartAuth) window.SiamCartAuth.applyUserToForms();
         renderCheckoutSummary();
         el.checkoutView.hidden = false;
         el.confirmationView.hidden = true;
@@ -832,6 +837,10 @@ var PRODUCTS_LOADED = false;
     function placeDemoOrder() {
         // Prevent double submission while a request is in flight.
         if (state.submittingOrder) return;
+        if (window.SiamCartAuth && window.SiamCartAuth.isRequired() && !window.SiamCartAuth.isAuthenticated()) {
+            window.SiamCartAuth.openLogin("Sign in or use Demo Login to place this order.");
+            return;
+        }
         if (!validateCheckout()) {
             showToast("Please fix the highlighted fields", "error");
             return;
@@ -1209,10 +1218,8 @@ var PRODUCTS_LOADED = false;
     el.confirmViewOrders.addEventListener("click", function () {
         var orderId = lastOrderId();
         if (!orderId) return;
-        var emailInput = document.getElementById("coEmail");
-        var email = emailInput ? emailInput.value.trim() : "";
         closeCheckout();
-        window.location.href = "/orders?email=" + encodeURIComponent(email);
+        window.location.href = "/orders";
     });
     el.confirmView.addEventListener("click", function () {
         var orderId = lastOrderId();
@@ -1269,9 +1276,9 @@ var PRODUCTS_LOADED = false;
         else if (!el.cartDrawer.hidden) trapFocus(el.cartDrawer, e);
     });
 
-    // Decorative header buttons
+    // Account and order navigation
     el.accountBtn.addEventListener("click", function () {
-        showToast("Accounts are part of a later phase — this is a research prototype");
+        if (window.SiamCartAuth) window.SiamCartAuth.open();
     });
     el.ordersBtn.addEventListener("click", function () {
         window.location.href = "/orders";

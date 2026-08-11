@@ -216,7 +216,7 @@ def _seed_task_orders(db_path):
 # ── fixtures ───────────────────────────────────────────────────────────
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="module", autouse=True)
 def tmp_db():
     """Temporary SQLite database, initialized with real production functions."""
     fd, path = tempfile.mkstemp(suffix=".db")

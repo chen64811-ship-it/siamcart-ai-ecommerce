@@ -280,7 +280,10 @@
     function setResultsText(orders, mode) {
         el.resultsHead.hidden = false;
         var n = orders.length;
-        if (mode === "latest") {
+        var authUser = window.SiamCartAuth && window.SiamCartAuth.currentUser();
+        if (authUser) {
+            el.resultsText.innerHTML = "<strong>" + n + "</strong> order" + (n === 1 ? "" : "s") + " owned by <strong>" + esc(authUser.display_name) + "</strong>";
+        } else if (mode === "latest") {
             el.resultsText.innerHTML = "<strong>" + n + "</strong> latest demo order" + (n === 1 ? "" : "s");
         } else if (mode === "email" && state.email) {
             el.resultsText.innerHTML = "<strong>" + n + "</strong> order" + (n === 1 ? "" : "s") + " for <strong>" + esc(state.email) + "</strong>";
@@ -291,6 +294,11 @@
 
     function fetchOrders(params, mode) {
         if (state.loading) return; // prevent duplicate searches
+        if (window.SiamCartAuth && window.SiamCartAuth.isRequired() && !window.SiamCartAuth.isAuthenticated()) {
+            showAuthenticationRequired();
+            window.SiamCartAuth.openLogin("Sign in or use Demo Login to view My Orders.");
+            return;
+        }
         state.mode = mode;
         showLoading();
 
@@ -309,10 +317,12 @@
                 state.loading = false;
                 var orders = (data && Array.isArray(data.orders)) ? data.orders : [];
                 state.orders = orders;
-                el.demoNote.hidden = mode !== "latest";
+                var authenticated = window.SiamCartAuth && window.SiamCartAuth.isAuthenticated();
+                el.demoNote.hidden = mode !== "latest" || !authenticated;
                 if (!orders.length) {
                     el.resultsHead.hidden = true;
-                    if (mode === "latest") showEmpty("The demo database has no orders yet — create one to get started.");
+                    if (mode === "latest" && authenticated) showEmpty("Your account has no orders yet — create one to get started.");
+                    else if (mode === "latest") showEmpty("The demo database has no orders yet — create one to get started.");
                     else showEmpty("We could not find any orders matching that search.");
                     return;
                 }
@@ -939,7 +949,27 @@
        ═══════════════════════════════════════════════════════════ */
     function init() {
         var params = new URLSearchParams(window.location.search);
+        var orderIdParam = (params.get("order_id") || "").trim();
         var emailParam = (params.get("email") || "").trim();
+
+        // With JWT auth, ownership comes from the token. Never select a
+        // customer by a saved email from another browser session.
+        if (window.SiamCartAuth && window.SiamCartAuth.isAuthenticated()) {
+            el.latestBtn.textContent = "Refresh My Orders";
+            var user = window.SiamCartAuth.currentUser();
+            if (user) {
+                var note = el.demoNote.querySelector("p");
+                if (note) note.innerHTML = "<strong>Private account view.</strong> Only orders owned by " + esc(user.display_name) + " are returned by the API.";
+            }
+            if (orderIdParam) {
+                el.type.value = "order_id";
+                el.input.value = orderIdParam;
+                runSearch();
+            } else {
+                loadLatest();
+            }
+            return;
+        }
 
         // 1) email in the page query string (View My Orders navigation)
         if (emailParam) {
@@ -997,5 +1027,31 @@
         if (e.key === "Escape" && !el.modal.hidden) closeDetails();
     });
 
-    init();
+    function showAuthenticationRequired() {
+        state.loading = false;
+        el.demoNote.hidden = true;
+        el.resultsHead.hidden = true;
+        el.list.innerHTML =
+            '<div class="orders-empty" role="status">' +
+            '<h2>Sign in to view your orders</h2>' +
+            '<p>Order history is private and linked to the current JWT account.</p>' +
+            '<button type="button" class="btn btn-primary" id="ordersLoginBtn">Open Login</button>' +
+            "</div>";
+        var button = document.getElementById("ordersLoginBtn");
+        if (button) button.addEventListener("click", function () {
+            window.SiamCartAuth.openLogin("Sign in or use Demo Login to view My Orders.");
+        });
+    }
+
+    if (window.SiamCartAuth) {
+        window.SiamCartAuth.ready().then(function () {
+            if (window.SiamCartAuth.isRequired() && !window.SiamCartAuth.isAuthenticated()) {
+                showAuthenticationRequired();
+            } else {
+                init();
+            }
+        });
+    } else {
+        init();
+    }
 })();

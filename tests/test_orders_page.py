@@ -119,7 +119,7 @@ def _payment_status(db_path, order_id):
 # ── fixtures ───────────────────────────────────────────────────────────
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="module", autouse=True)
 def tmp_db():
     """Temporary SQLite database, initialized with real production functions."""
     fd, path = tempfile.mkstemp(suffix=".db")

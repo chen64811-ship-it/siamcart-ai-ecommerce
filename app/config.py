@@ -44,6 +44,7 @@ DATABASE_URL = os.getenv(
 # Authentication is optional for the public research demo and mandatory when
 # explicitly enabled in production.
 AUTH_REQUIRED = os.getenv("AUTH_REQUIRED", "false").lower() == "true"
+DEMO_LOGIN_ENABLED = os.getenv("DEMO_LOGIN_ENABLED", "false").lower() == "true"
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "change-me-in-production")
 JWT_ALGORITHM = "HS256"
 JWT_ACCESS_TOKEN_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_MINUTES", "30"))
