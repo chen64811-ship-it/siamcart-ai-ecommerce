@@ -70,9 +70,33 @@ def _init_databases():
     print(f"Done! Orders DB: {db_path}")
 
 
+def _warm_up_policy_index():
+    """Pre-load the policy embedding model + ChromaDB collection at startup.
+
+    Starting the server without this makes the FIRST policy-search request pay
+    the full cold-start cost (up to ~80s on a cold disk/network). Warming up
+    here moves that cost to boot time. Failures are non-fatal.
+    """
+    import time
+    try:
+        from app.agents import policy_index
+        t0 = time.perf_counter()
+        print("Warming up policy index (embedding model)...")
+        ok = policy_index.warm_up()
+        if ok:
+            elapsed = time.perf_counter() - t0
+            print(f"Policy embedding model ready in {elapsed:.1f}s")
+        else:
+            print("WARNING: policy embedding model warm-up failed "
+                  "(will lazy-load on first request)")
+    except Exception as exc:  # pragma: no cover — startup must not break
+        print(f"WARNING: policy index warm-up skipped: {exc}")
+
+
 def _start_server():
     """Start the FastAPI web server."""
     _init_databases()
+    _warm_up_policy_index()
     from app.api.server import app
     import uvicorn
     print("\n" + "─" * 50)

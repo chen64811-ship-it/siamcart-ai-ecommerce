@@ -335,6 +335,38 @@ def _extract_order_id(message: str) -> Optional[str]:
     return None
 
 
+def _looks_out_of_scope(msg_lower: str) -> bool:
+    """Conservative off-topic detector.
+
+    Returns True only when the message contains a clear non-store topic marker
+    AND no store-domain vocabulary. Ambiguous messages return False so they
+    fall through to UNKNOWN (which asks for an order number) rather than being
+    wrongly escalated to human review.
+    """
+    _STORE_DOMAIN = (
+        "order", "ord-", "ord1", "สินค้า", "คำสั่งซื้อ", "ออเดอร์", "พัสดุ",
+        "จัดส่ง", "ขนส่ง", "ชำระ", "จ่าย", "คืน", "ยกเลิก", "refund", "return",
+        "tracking", "shipment", "delivery", "payment", "product", "price",
+        "ราคา", "นโยบาย", "policy", "ใบเสร็จ", "ที่อยู่", "address", "stock",
+        "สต็อก", "โปรโมชั่น", "promotion", "discount", "ส่วนลด",
+    )
+    if any(kw in msg_lower for kw in _STORE_DOMAIN):
+        return False
+
+    _OFFTOPIC_MARKERS = (
+        # General knowledge / unrelated topics
+        "weather", "อากาศ", "พยากรณ์", "joke", "ตลก", "เรื่องตลก",
+        "football", "ฟุตบอล", "politics", "การเมือง", "news", "ข่าว",
+        "recipe", "สูตรอาหาร", "song", "เพลง", "movie", "หนัง",
+        "capital of", "who is the president", "translate this to",
+        # Prompt-injection / system-probing attempts
+        "ignore previous", "ignore all previous", "ignore the above",
+        "system prompt", "reveal your", "your instructions", "jailbreak",
+        "ลืมคำสั่ง", "เปิดเผยคำสั่ง",
+    )
+    return any(m in msg_lower for m in _OFFTOPIC_MARKERS)
+
+
 def _classify_with_source(message: str) -> Tuple[str, str]:
     """Return (intent, source) where source is one of:
       - "explicit": a keyword pattern matched
@@ -367,6 +399,13 @@ def _classify_with_source(message: str) -> Tuple[str, str]:
     # (an order ID is an entity, not an intent — Task 5D-5)
     if _extract_order_id(message):
         return "ORDER_STATUS", "order_id_fallback"
+
+    # Off-topic detection (conservative): only when there is NO store-domain
+    # vocabulary anywhere in the message AND a clear non-store topic marker
+    # is present. Anything ambiguous stays UNKNOWN (safer: asks for an order
+    # number rather than wrongly flagging a real question for human review).
+    if _looks_out_of_scope(msg_lower):
+        return "OUT_OF_SCOPE", "explicit"
 
     return "UNKNOWN", "unknown"
 

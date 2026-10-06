@@ -503,9 +503,38 @@ def _detect_language(text: str) -> str:
     return "en"
 
 
+def _set_offline_env_if_model_cached() -> None:
+    """Force HuggingFace offline mode when the embedding model is already cached.
+
+    Without this, SentenceTransformer's first load sends ~20 serial HEAD/GET
+    requests to huggingface.co to validate file metadata, adding 20+ seconds of
+    network latency to the first policy-search request. The model weights are
+    already on disk (458 MB), so the network round-trips are pure waste.
+
+    Only enables offline mode when a local snapshot exists — otherwise we must
+    stay online to download the model on first use.
+    """
+    cache_root = os.environ.get("HF_HOME")
+    if cache_root:
+        hub_dir = Path(cache_root) / "hub"
+    else:
+        hub_dir = Path.home() / ".cache" / "huggingface" / "hub"
+
+    # EMBEDDING_MODEL may be "org/name" or a bare path.
+    if "/" in EMBEDDING_MODEL:
+        org, name = EMBEDDING_MODEL.split("/", 1)
+        snapshot_glob = f"models--{org}--{name}"
+    else:
+        return  # local filesystem path — no hub access needed
+
+    if (hub_dir / snapshot_glob).exists():
+        os.environ.setdefault("HF_HUB_OFFLINE", "1")
+        os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+
+
 def _get_embedding_model():
     """Lazy-load the sentence-transformers embedding model — cached once per process."""
-    from sentence_transformers import SentenceTransformer
+    _set_offline_env_if_model_cached()
     return _get_sentence_transformer()
 
 
@@ -514,3 +543,16 @@ def _get_sentence_transformer():
     """Cached model loader — the SentenceTransformer constructor is called at most once."""
     from sentence_transformers import SentenceTransformer
     return SentenceTransformer(EMBEDDING_MODEL)
+
+
+def warm_up() -> bool:
+    """Pre-load the embedding model so the first live request skips the cold start.
+
+    Returns True when the model is ready. Never raises — a failure to warm up
+    must not stop the server from starting (the request path still lazy-loads).
+    """
+    try:
+        _get_embedding_model()
+        return True
+    except Exception:
+        return False

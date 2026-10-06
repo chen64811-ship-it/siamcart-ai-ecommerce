@@ -995,6 +995,29 @@ def _refund_flow_response(
     reason_display = _reason_display_thai(reason)
     reason_part = f" (เหตุผล: {reason_display})" if reason_display else ""
 
+    # ── Terminal states: report the fact, never the policy lecture ──────
+    # Bug fix: a refunded/cancelled order was previously answered with a
+    # generic "no refund information found" hallucination because the prompt
+    # only ever framed the query as policy advice. State the truth directly.
+    if payment_status == "refunded" or order_status == "cancelled":
+        refunded = payment_status == "refunded"
+        fact = (
+            f"คำสั่งซื้อ {oid} ได้รับการคืนเงินแล้วค่ะ" if refunded
+            else f"คำสั่งซื้อ {oid} ถูกยกเลิกแล้วค่ะ"
+        )
+        extra = ""
+        if order_status == "cancelled" and refunded:
+            extra = " และได้ดำเนินการคืนเงินเรียบร้อยแล้ว"
+        note = ""
+        if str(order_evidence.get("refund_type") or "") == "simulated":
+            note = " (เป็นการคืนเงินจำลองเพื่อการสาธิต ไม่มีการโอนเงินจริง)"
+        return (
+            f"{fact}{extra}{note} "
+            f"สถานะปัจจุบันคือ{_order_phrase_thai(order_status)} "
+            f"และสถานะการชำระเงินคือคืนเงินแล้ว "
+            f"หากยังไม่ได้รับเงินคืนภายใน 5-7 วันทำการ กรุณาติดต่อฝ่ายบริการลูกค้าค่ะ"
+        )
+
     if is_cod and not paid:
         status_part = (
             "คำสั่งซื้อนี้เป็นแบบเก็บเงินปลายทาง (Cash on Delivery) "
@@ -1455,7 +1478,13 @@ def process_message(
         response_text = _UNKNOWN_RESPONSE
 
     elif intent == "RETURN_REFUND":
-        if _is_refund_request(message) or pending_intent == "RETURN_REFUND":
+        # Refund WORKFLOW when the customer asks to refund/return/cancel, OR
+        # whenever an order ID is present (so a refund-STATUS question such as
+        # "is ORD-1065 refunded?" still fetches authoritative order evidence
+        # instead of falling into the pure policy-RAG path with no order data,
+        # which caused a refunded order to be answered as "insufficient info").
+        if (_is_refund_request(message) or pending_intent == "RETURN_REFUND"
+                or effective_order_id):
             # ── Refund/cancellation request flow (Task 5D-5) ──
             # Task 8A: effective_order_id may come from the request context
             # or the session active order, not only from the message text.

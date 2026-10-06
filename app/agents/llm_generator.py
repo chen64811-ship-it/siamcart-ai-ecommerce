@@ -36,6 +36,10 @@ Rules:
    Do NOT answer in English and do NOT include an English translation —
    even when the customer writes in English.
 2. Use ONLY the evidence provided below. Do not invent facts.
+   The evidence is authoritative: when it states a status (e.g.
+   order_status: cancelled, payment_status: refunded, shipment_status:
+   delivered), report that status DIRECTLY. Never say information is
+   "not found" or "insufficient" when the evidence already contains it.
 3. Preserve all order IDs, product names, statuses, dates, amounts, and
    policy terms exactly as written.
 4. If the evidence is empty or insufficient, ask the customer to clarify politely.
@@ -57,18 +61,89 @@ _TRANSLATABLE_FIELDS = {
     "shipping_provider", "estimated_delivery_date",
 }
 
+# Terminal states that the LLM must NEVER contradict with a "not found" claim.
+_TERMINAL_STATUS_VALUES = {"cancelled", "canceled", "refunded", "delivered"}
+
+# Phrases that assert the customer's own order data is missing. If the
+# evidence contains a terminal status, any of these means the model has
+# contradicted authoritative data and the deterministic fallback must win.
+_CONTRADICTION_PHRASES = (
+    "ไม่พบข้อมูล",
+    "ไม่พบสถานะ",
+    "ไม่พบคำสั่งซื้อ",
+    "ไม่เพียงพอ",
+    "ข้อมูลไม่ครบ",
+    "ตรวจสอบไม่ได้",
+    "ยืนยันไม่ได้",
+    "not found",
+    "no information",
+    "insufficient",
+    "unable to confirm",
+)
+
+
+def _has_terminal_status(evidence: Dict[str, Any]) -> bool:
+    """True when the evidence asserts a terminal order/payment state."""
+    for field in ("order_status", "payment_status", "shipment_status"):
+        value = str(evidence.get(field) or "").strip().lower()
+        if value in _TERMINAL_STATUS_VALUES:
+            return True
+    return False
+
+
+def _looks_like_reasoning_leak(text: str) -> bool:
+    """Detect chain-of-thought / English meta-commentary leaking as the answer.
+
+    Reasoning-capable models occasionally place their scratchpad in `content`
+    instead of the final Thai answer. Symptoms: the text is dominated by
+    English, or contains first-person planning markers ("We need answer",
+    "Need use evidence", "Let's parse", "Rule 2:", etc.). A valid customer
+    reply is polite Thai, so heavy English + meta markers = leak.
+
+    Conservative by design: requires BOTH a meta marker AND that Thai is a
+    small minority of the text, so a short English word inside a Thai answer
+    never trips it.
+    """
+    if not text:
+        return False
+    low = text.lower()
+    meta_markers = (
+        "we need", "need answer", "need use", "let's ", "let us ",
+        "rule 2:", "rule 4:", "rule says", "evidence only", "intent ",
+        "we should", "we can say", "need respond", "okay?", "hmm.",
+    )
+    has_marker = any(m in low for m in meta_markers)
+    if not has_marker:
+        return False
+    # Thai chars (U+0E00–U+0E7F) vs total letters
+    thai = sum(1 for ch in text if "\u0e00" <= ch <= "\u0e7f")
+    latin = sum(1 for ch in text if ch.isascii() and ch.isalpha())
+    if thai + latin == 0:
+        return False
+    # If Latin letters dominate (Thai is < 30% of the alphabetic content), leak.
+    return thai / (thai + latin) < 0.30
+
 
 def _evidence_preserved(response_text: str, evidence: Dict[str, Any]) -> bool:
     """Check that critical evidence values appear in the response.
 
     - order_id and tracking_number are strictly checked (must match exactly).
     - Other fields (statuses, dates) are acceptably paraphrased by the LLM.
+    - A terminal status (cancelled/refunded/delivered) must not be
+      contradicted by a "not found / insufficient information" claim.
     """
     for field in CRITICAL_FIELDS:
         value = evidence.get(field)
         if value and str(value).strip():
             if str(value) not in response_text:
                 return False
+
+    if _has_terminal_status(evidence):
+        low = response_text.lower()
+        for phrase in _CONTRADICTION_PHRASES:
+            if phrase in low:
+                return False
+
     return True
 
 
@@ -207,11 +282,26 @@ def generate_response(
             timeout=LLM_CONFIG["timeout"],
         )
         latency = round((time.time() - start) * 1000, 2)
-        content = (response.choices[0].message.content or "").strip()
+        message = response.choices[0].message
+        content = (message.content or "").strip()
+        # Reasoning models (e.g. deepseek-flash) may leave `content` empty and
+        # emit the answer in `reasoning_content`. Fall back to it rather than
+        # declaring an empty output.
+        if not content:
+            content = (getattr(message, "reasoning_content", None) or "").strip()
 
         if not content:
             result["latency_ms"] = latency
             result["error_type"] = "empty_output"
+            return result
+
+        # Reject chain-of-thought leakage before it reaches the customer.
+        if _looks_like_reasoning_leak(content) and deterministic_fallback:
+            result["response"] = deterministic_fallback
+            result["source"] = "deterministic"
+            result["latency_ms"] = latency
+            result["error_type"] = "reasoning_leak"
+            result["validation_passed"] = False
             return result
 
         # Validate evidence preservation

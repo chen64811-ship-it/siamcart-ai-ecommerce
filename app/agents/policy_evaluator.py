@@ -520,12 +520,27 @@ def _try_deepseek_generation(
             timeout=LLM_CONFIG["timeout"],
         )
         llm_latency = round((time.time() - start) * 1000, 2)
-        content = (response.choices[0].message.content or "").strip()
+        message = response.choices[0].message
+        content = (message.content or "").strip()
+        # Reasoning models may leave `content` empty and emit the answer in
+        # `reasoning_content` — fall back rather than declaring empty output.
+        # Guard the type: mocked/absent attributes must not masquerade as text.
+        if not content:
+            reasoning = getattr(message, "reasoning_content", None)
+            if isinstance(reasoning, str):
+                content = reasoning.strip()
 
         if not content:
             return {"used_llm": True, "llm_response": None,
                     "validation_passed": False, "latency_ms": llm_latency,
                     "error_type": "empty_output"}
+
+        # Reject chain-of-thought leakage (English scratchpad as the answer).
+        from app.agents.llm_generator import _looks_like_reasoning_leak
+        if _looks_like_reasoning_leak(content):
+            return {"used_llm": True, "llm_response": None,
+                    "validation_passed": False, "latency_ms": llm_latency,
+                    "error_type": "reasoning_leak"}
 
         # Run policy validation
         validation_passed = _validate_policy_response(content, clauses)
