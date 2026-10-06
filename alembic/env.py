@@ -1,5 +1,6 @@
 from logging.config import fileConfig
 import os
+from pathlib import Path
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
@@ -16,7 +17,15 @@ target_metadata = metadata
 
 def get_url() -> str:
     url = normalize_database_url(os.getenv("DATABASE_URL", DATABASE_URL))
-    return url.replace("postgresql://", "postgresql+psycopg://", 1) if url.startswith("postgresql://") else url
+    if url.startswith("postgresql://"):
+        return url.replace("postgresql://", "postgresql+psycopg://", 1)
+    if url.startswith("sqlite:///"):
+        sqlite_path = Path(url.removeprefix("sqlite:///"))
+        if not sqlite_path.is_absolute():
+            sqlite_path = Path(__file__).resolve().parents[1] / sqlite_path
+        sqlite_path.parent.mkdir(parents=True, exist_ok=True)
+        return f"sqlite:///{sqlite_path.as_posix()}"
+    return url
 
 
 def run_migrations_offline() -> None:

@@ -134,6 +134,7 @@ def connect_database(db_path: str | None = None, write: bool = False):
         return PostgresConnection(psycopg.connect(driver_url))
 
     sqlite_path = url.removeprefix("sqlite:///")
+    Path(sqlite_path).parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(sqlite_path)
     conn.row_factory = sqlite3.Row
     if write:

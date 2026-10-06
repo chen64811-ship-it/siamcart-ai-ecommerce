@@ -32,8 +32,8 @@ A useful system also needs deterministic business logic, reliable state
 management, error handling, database consistency, testing, deployment, and a
 usable customer experience.
 
-Live Demo:
-https://web-production-1ea79.up.railway.app
+Local Demo:
+Follow the repository setup instructions and open http://localhost:8000
 
 GitHub:
 https://github.com/chen64811-ship-it/siamcart-ai-ecommerce

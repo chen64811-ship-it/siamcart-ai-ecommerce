@@ -10,7 +10,7 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)
 [![CI](https://github.com/chen64811-ship-it/siamcart-ai-ecommerce/actions/workflows/ci.yml/badge.svg)](https://github.com/chen64811-ship-it/siamcart-ai-ecommerce/actions/workflows/ci.yml)
 
-**Live Demo:** https://web-production-1ea79.up.railway.app
+**Local Demo:** follow the setup instructions below, then open http://localhost:8000
 **GitHub:** https://github.com/chen64811-ship-it/siamcart-ai-ecommerce
 
 SiamCart is a deployed research prototype for Thai e-commerce customer support.
@@ -22,7 +22,7 @@ framework.
 
 ![SiamCart Demo](docs/assets/siamcart_demo.gif)
 
-Try it: https://web-production-1ea79.up.railway.app
+Try it locally: http://localhost:8000
 
 ## Architecture
 

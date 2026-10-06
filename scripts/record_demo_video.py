@@ -4,13 +4,14 @@ Fully JS-driven (page.evaluate) to bypass Playwright actionability quirks on
 the public site. Uses local Chrome, viewport 1440x900, records video.
 Creates exactly one disposable public order through the real UI.
 """
+import os
 import re
 import sys
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-BASE = "https://web-production-1ea79.up.railway.app"
+BASE = os.getenv("DEMO_BASE_URL", "http://127.0.0.1:8000")
 OUT_DIR = Path(__file__).resolve().parent.parent / "docs" / "assets"
 VIDEO_DIR = OUT_DIR / "video_tmp"
 VIDEO_DIR.mkdir(parents=True, exist_ok=True)
