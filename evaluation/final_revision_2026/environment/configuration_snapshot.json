@@ -1,0 +1,120 @@
+{
+  "baseline_context": {
+    "baseline_design": "one unified DeepSeek JSON pipeline; no Router, Transaction Tracker, Store Policy Evaluator, direct SQLite lookup, or ChromaDB retrieval",
+    "order_context_sha256": "3c903fb8be1fee5f04e1b181ec66b26e99177792ebc7afd9149b62f6913675d0",
+    "order_count": 5,
+    "order_source": "T:\\thai-ecommerce-agent\\app\\db\\orders.py",
+    "order_source_sha256": "3a9fd61245ebc2ddfbb1a0424c22bb5ac28d713084723b707a9cae8c0c1f2aae",
+    "policy_sources": [
+      {
+        "characters": 1994,
+        "path": "T:\\thai-ecommerce-agent\\data\\policies\\refund_policy.md",
+        "sha256": "435f96561488dd046052d37272cd228abf89796bda3a583eaface1e6aa4d60b3"
+      },
+      {
+        "characters": 2066,
+        "path": "T:\\thai-ecommerce-agent\\data\\policies\\return_policy.md",
+        "sha256": "71e73220fb133c0c51555e1490f2cd5bf3d7eae674c18fd6fcc0be990e41885b"
+      },
+      {
+        "characters": 2172,
+        "path": "T:\\thai-ecommerce-agent\\data\\policies\\exchange_policy.md",
+        "sha256": "7af9760bd8759c37c177d04192ba9d6e3881819217110765da8e1b4ff59d3f3b"
+      },
+      {
+        "characters": 1898,
+        "path": "T:\\thai-ecommerce-agent\\data\\policies\\shipping_policy.md",
+        "sha256": "1b73b0e979f0049d3e0bdb4250693a1fe08308ab491e20816f9d8ba3ec50cf62"
+      },
+      {
+        "characters": 1868,
+        "path": "T:\\thai-ecommerce-agent\\data\\policies\\payment_policy.md",
+        "sha256": "1f1fc5b0804fd8212f1eb8dda7df10fcf718152e649ed9b55e21121bdbcabb3f"
+      }
+    ],
+    "system_prompt_sha256": "8e7e536fc5c0589617e0a4876d98fb2a63158407daaa3f897f270706389d6e0c"
+  },
+  "captured_at": "2026-09-01T12:17:14.563661+00:00",
+  "experiment_label": "Post-defense repeated evaluation — current implementation",
+  "monolithic_context_inventory_sha256": "19c9aa5b961fc657229ae6e8806c2d6e469c46e67e43bc054415754a818d507a",
+  "monolithic_prompt_sha256": "2a29c87abb662262c25387736154a0d4687be2da3fb2be0e8f5803ea1c3d97ba",
+  "package_versions": {
+    "chromadb": "1.5.9",
+    "fastapi": "0.141.1",
+    "httpx": "0.28.1",
+    "numpy": "2.5.2",
+    "openai": "2.53.0",
+    "pydantic": "2.13.4",
+    "python-dotenv": "1.2.2",
+    "sentence-transformers": "5.7.0",
+    "sqlalchemy": "2.0.51"
+  },
+  "production_db_target": "T:\\thai-ecommerce-agent\\data\\orders.db",
+  "production_db_used": false,
+  "runtime": {
+    "api_key_present": true,
+    "auth_required": false,
+    "baseline_max_tokens": 1024,
+    "baseline_temperature": 0.1,
+    "baseline_timeout_seconds": 60,
+    "chroma_collection_name": "siamcart_store_policies",
+    "deepseek_base_url": "https://api.deepseek.com",
+    "deepseek_enabled": true,
+    "deepseek_model": "deepseek-v4-flash",
+    "distance_metric": "cosine",
+    "effective_isolated_chroma_path": "T:\\thai-ecommerce-agent\\evaluation\\final_revision_2026\\runtime",
+    "effective_isolated_store_db_path": "T:\\thai-ecommerce-agent\\evaluation\\final_revision_2026\\runtime",
+    "embedding_model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    "git_head": "19361b35e27788fa1dea2cca020a519f41f14697",
+    "max_chunk_characters": 800,
+    "max_retries_after_first_attempt": 3,
+    "multi_agent_max_tokens": 512,
+    "multi_agent_temperature": 0.1,
+    "multi_agent_timeout_seconds": 30,
+    "policy_chunking_strategy": "Markdown H2 section-based chunks; bilingual Thai and English blocks split into separate chunks; complete section metadata preserved.",
+    "policy_retrieval_distance_criterion": 0.6,
+    "policy_retrieval_top_k": 3,
+    "router_confidence_meanings": {
+      "0.3": "unknown message requiring clarification",
+      "0.6": "out-of-scope or clarification/human-review class",
+      "1.0": "explicit recognized intent and the current implementation's order-ID fallback"
+    },
+    "router_confidence_values_observed": {
+      "explicit_intent": 1.0,
+      "order_id_fallback": 1.0,
+      "out_of_scope_or_human_review": 0.6,
+      "unknown_clarification": 0.3
+    },
+    "router_implementation": "deterministic rule-based",
+    "routing_threshold": null,
+    "routing_threshold_reason": "Deterministic rule-based routing; confidence values are heuristic labels, not calibrated probabilities or an acceptance threshold.",
+    "warmup_excluded_from_scored_latency": true
+  },
+  "source_dataset": {
+    "case_type_counts": {
+      "null": 120
+    },
+    "category_counts": {
+      "clarification": 30,
+      "policy": 30,
+      "routing": 30,
+      "transaction": 30
+    },
+    "category_files_match_authoritative": true,
+    "input_type_counts": {
+      "abnormal": 18,
+      "boundary": 32,
+      "normal": 70
+    },
+    "language_counts": {
+      "en": 16,
+      "th": 72,
+      "th-en": 32
+    },
+    "scenario_schema": "T:\\thai-ecommerce-agent\\data\\evaluation\\scenario_schema.json",
+    "simulated_researcher_designed": true,
+    "source_dataset_path": "T:\\thai-ecommerce-agent\\data\\evaluation\\all_scenarios.json",
+    "source_dataset_sha256": "ea45e38b068285dfd0ae174047773b05654313faac718a19d981b991900bb137",
+    "total_scenarios": 120
+  }
+}

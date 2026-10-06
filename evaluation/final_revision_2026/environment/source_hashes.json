@@ -1,0 +1,102 @@
+{
+  "captured_at": "2026-09-01T12:17:13.017617+00:00",
+  "files": [
+    {
+      "bytes": 16788,
+      "path": "T:\\thai-ecommerce-agent\\app\\agents\\router.py",
+      "relative_path": "app\\agents\\router.py",
+      "sha256": "6c7f928c89bc7af2536d31e5867cd1acb7f20a246ca2864ec487ca23bcb44d43"
+    },
+    {
+      "bytes": 78097,
+      "path": "T:\\thai-ecommerce-agent\\app\\agents\\orchestrator.py",
+      "relative_path": "app\\agents\\orchestrator.py",
+      "sha256": "e083a04270d7ac2e4de0fca3d7cbac7c7fbd723cf74d4f909f27a9e50f64af9e"
+    },
+    {
+      "bytes": 6919,
+      "path": "T:\\thai-ecommerce-agent\\app\\agents\\transaction_tracker.py",
+      "relative_path": "app\\agents\\transaction_tracker.py",
+      "sha256": "3e9c8a65ae6743cd9cee1034dd9d7255f334a2049e240b3010dd46a56cda138b"
+    },
+    {
+      "bytes": 28735,
+      "path": "T:\\thai-ecommerce-agent\\app\\agents\\policy_evaluator.py",
+      "relative_path": "app\\agents\\policy_evaluator.py",
+      "sha256": "936711a5e408784c429a0efc4625acfc43962a90793a92cfcd247e8d60c834b3"
+    },
+    {
+      "bytes": 18740,
+      "path": "T:\\thai-ecommerce-agent\\app\\agents\\policy_index.py",
+      "relative_path": "app\\agents\\policy_index.py",
+      "sha256": "1a9baa9e21cfcf6db73fa3990956ed190002532d42607cd6f6e0c621a8f29e16"
+    },
+    {
+      "bytes": 9499,
+      "path": "T:\\thai-ecommerce-agent\\app\\agents\\llm_generator.py",
+      "relative_path": "app\\agents\\llm_generator.py",
+      "sha256": "960bc7e0f9fda58cddf3a57480611fee254a7b55cd351d685958099fe8a89913"
+    },
+    {
+      "bytes": 2632,
+      "path": "T:\\thai-ecommerce-agent\\app\\config.py",
+      "relative_path": "app\\config.py",
+      "sha256": "b7164c60ca7d17c6270331c889633af6ec4f21780cbb7b26733bf93dcb4330cd"
+    },
+    {
+      "bytes": 63908,
+      "path": "T:\\thai-ecommerce-agent\\scripts\\run_reproducibility_2026.py",
+      "relative_path": "scripts\\run_reproducibility_2026.py",
+      "sha256": "5269db78ce4876a39ba25fb128252d7226650e019d518c15876f17fdd8d9461e"
+    },
+    {
+      "bytes": 31166,
+      "path": "T:\\thai-ecommerce-agent\\scripts\\run_monolithic_baseline.py",
+      "relative_path": "scripts\\run_monolithic_baseline.py",
+      "sha256": "11c15056fd358b6386c28bbbd121b002355ae26436ef7d5d5a8520f31f1558c8"
+    },
+    {
+      "bytes": 77925,
+      "path": "T:\\thai-ecommerce-agent\\scripts\\run_final_revision_2026.py",
+      "relative_path": "scripts\\run_final_revision_2026.py",
+      "sha256": "da1eab00bfbbc664cf54f572fe6923e09c737370f3a8757b12a8416147fc5c4f"
+    },
+    {
+      "bytes": 82578,
+      "path": "T:\\thai-ecommerce-agent\\data\\evaluation\\all_scenarios.json",
+      "relative_path": "data\\evaluation\\all_scenarios.json",
+      "sha256": "ea45e38b068285dfd0ae174047773b05654313faac718a19d981b991900bb137"
+    },
+    {
+      "bytes": 3898,
+      "path": "T:\\thai-ecommerce-agent\\data\\policies\\exchange_policy.md",
+      "relative_path": "data\\policies\\exchange_policy.md",
+      "sha256": "7af9760bd8759c37c177d04192ba9d6e3881819217110765da8e1b4ff59d3f3b"
+    },
+    {
+      "bytes": 3160,
+      "path": "T:\\thai-ecommerce-agent\\data\\policies\\payment_policy.md",
+      "relative_path": "data\\policies\\payment_policy.md",
+      "sha256": "1f1fc5b0804fd8212f1eb8dda7df10fcf718152e649ed9b55e21121bdbcabb3f"
+    },
+    {
+      "bytes": 3442,
+      "path": "T:\\thai-ecommerce-agent\\data\\policies\\refund_policy.md",
+      "relative_path": "data\\policies\\refund_policy.md",
+      "sha256": "435f96561488dd046052d37272cd228abf89796bda3a583eaface1e6aa4d60b3"
+    },
+    {
+      "bytes": 3632,
+      "path": "T:\\thai-ecommerce-agent\\data\\policies\\return_policy.md",
+      "relative_path": "data\\policies\\return_policy.md",
+      "sha256": "71e73220fb133c0c51555e1490f2cd5bf3d7eae674c18fd6fcc0be990e41885b"
+    },
+    {
+      "bytes": 3236,
+      "path": "T:\\thai-ecommerce-agent\\data\\policies\\shipping_policy.md",
+      "relative_path": "data\\policies\\shipping_policy.md",
+      "sha256": "1b73b0e979f0049d3e0bdb4250693a1fe08308ab491e20816f9d8ba3ec50cf62"
+    }
+  ],
+  "git_head": "19361b35e27788fa1dea2cca020a519f41f14697"
+}

@@ -1,0 +1,142 @@
+{
+  "run_id": "run_3",
+  "systems": {
+    "monolithic": {
+      "clarification": {
+        "confusion_matrix": {
+          "false_negative": 7,
+          "false_positive": 11,
+          "true_negative": 86,
+          "true_positive": 16
+        },
+        "denominator": 120,
+        "expected_positive": 23,
+        "raw_frequency": 27
+      },
+      "error_counts": {
+        "None": 103,
+        "empty_output": 1,
+        "json_parse_failed": 11,
+        "schema_validation_failed": 5
+      },
+      "escalation": {
+        "confusion_matrix": {
+          "false_negative": 8,
+          "false_positive": 0,
+          "true_negative": 107,
+          "true_positive": 5
+        },
+        "denominator": 120,
+        "expected_positive": 13,
+        "raw_frequency": 5
+      },
+      "execution_failures": 17,
+      "execution_success": {
+        "denominator": 120,
+        "numerator": 103,
+        "percentage": 85.833333
+      },
+      "latency": {
+        "basis": "all attempted scored scenario runs; warm-up and preflight excluded",
+        "maximum_ms": 43664.6,
+        "mean_ms": 5359.473167,
+        "median_ms": 3951.885,
+        "minimum_ms": 1831.01,
+        "n": 120,
+        "p95_ms": 10819.0805,
+        "sample_standard_deviation_ms": 5053.010931
+      },
+      "llm_call_count": {
+        "scenarios_with_calls": 120,
+        "total": 128
+      },
+      "manual_review_case_count": 30,
+      "policy_answer_correctness": {
+        "denominator": 0,
+        "manual_review_required": 30,
+        "numerator": 0,
+        "percentage": null,
+        "status": "pending_manual_review"
+      },
+      "routing_accuracy": {
+        "denominator": 120,
+        "numerator": 81,
+        "percentage": 67.5
+      },
+      "successful_executions": 103,
+      "total_scenarios": 120,
+      "transaction_answer_accuracy": {
+        "denominator": 30,
+        "numerator": 16,
+        "percentage": 53.333333
+      }
+    },
+    "multi_agent": {
+      "clarification": {
+        "confusion_matrix": {
+          "false_negative": 4,
+          "false_positive": 20,
+          "true_negative": 77,
+          "true_positive": 19
+        },
+        "denominator": 120,
+        "expected_positive": 23,
+        "raw_frequency": 39
+      },
+      "error_counts": {
+        "None": 120
+      },
+      "escalation": {
+        "confusion_matrix": {
+          "false_negative": 7,
+          "false_positive": 0,
+          "true_negative": 107,
+          "true_positive": 6
+        },
+        "denominator": 120,
+        "expected_positive": 13,
+        "raw_frequency": 6
+      },
+      "execution_failures": 0,
+      "execution_success": {
+        "denominator": 120,
+        "numerator": 120,
+        "percentage": 100.0
+      },
+      "latency": {
+        "basis": "all attempted scored scenario runs; warm-up and preflight excluded",
+        "maximum_ms": 18204.14,
+        "mean_ms": 833.111167,
+        "median_ms": 2.75,
+        "minimum_ms": 0.17,
+        "n": 120,
+        "p95_ms": 4252.119,
+        "sample_standard_deviation_ms": 2141.377166
+      },
+      "llm_call_count": {
+        "scenarios_with_calls": 25,
+        "total": 27
+      },
+      "manual_review_case_count": 30,
+      "policy_answer_correctness": {
+        "denominator": 0,
+        "manual_review_required": 30,
+        "numerator": 0,
+        "percentage": null,
+        "status": "pending_manual_review"
+      },
+      "routing_accuracy": {
+        "denominator": 120,
+        "numerator": 84,
+        "percentage": 70.0
+      },
+      "successful_executions": 120,
+      "total_scenarios": 120,
+      "transaction_answer_accuracy": {
+        "denominator": 30,
+        "numerator": 30,
+        "percentage": 100.0
+      }
+    }
+  }
+}

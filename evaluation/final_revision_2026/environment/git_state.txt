@@ -1,0 +1,6 @@
+git_rev_parse_HEAD: 19361b35e27788fa1dea2cca020a519f41f14697
+git_branch: main
+git_status_porcelain:
+?? evaluation/
+?? scripts/run_final_revision_2026.py
+?? scripts/run_reproducibility_2026.py

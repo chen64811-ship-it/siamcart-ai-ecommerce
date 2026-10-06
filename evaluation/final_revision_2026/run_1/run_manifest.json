@@ -1,0 +1,40 @@
+{
+  "chroma_path": "T:\\thai-ecommerce-agent\\evaluation\\final_revision_2026\\runtime\\run_1\\chroma",
+  "database_path": "T:\\thai-ecommerce-agent\\evaluation\\final_revision_2026\\runtime\\run_1\\orders.db",
+  "db_initialization_ms": 2.37,
+  "deepseek_preflight": {
+    "http_success": true,
+    "latency_ms": 1679.96,
+    "model": "deepseek-v4-flash",
+    "nonempty": true,
+    "status": "passed"
+  },
+  "embedding_model_load_ms": 19253.06,
+  "ended_at": "2026-09-01T12:29:50.612335+00:00",
+  "ended_warmup_at": "2026-09-01T12:17:37.928749+00:00",
+  "experiment_type": "post-defense repeated evaluation — current implementation",
+  "monolithic_records": 120,
+  "multi_agent_records": 120,
+  "policy_index_build_ms": 749.29,
+  "policy_index_new_chunks": 0,
+  "policy_retrieval_warmup": {
+    "chunk_count": 3,
+    "success": true
+  },
+  "policy_retrieval_warmup_ms": 53.76,
+  "retry_policy": {
+    "backoff_ms": [
+      400,
+      800,
+      1600
+    ],
+    "max_retries_after_first_attempt": 3,
+    "no_synthetic_success": true
+  },
+  "run_id": "run_1",
+  "run_metrics_sha256": "20de365f1a4b97508763840a89fda8890aca9fea1cb622336a86055994505279",
+  "scenario_file": "T:\\thai-ecommerce-agent\\evaluation\\final_revision_2026\\scenarios_120_frozen.json",
+  "scenario_file_sha256": "ea45e38b068285dfd0ae174047773b05654313faac718a19d981b991900bb137",
+  "started_at": "2026-09-01T12:17:16.189257+00:00",
+  "warmup_excluded_from_scored_latency": true
+}

@@ -1,0 +1,12 @@
+{
+  "exists_after": true,
+  "exists_before": true,
+  "last_write_time_after": 1786432329494406400,
+  "last_write_time_before": 1786432329494406400,
+  "path": "T:\\thai-ecommerce-agent\\data\\orders.db",
+  "sha256_after": "3ee8b5e2f7582f9b0a82c70af4d0cbcc0647c7f4b38d705c740130bf8823126d",
+  "sha256_before": "3ee8b5e2f7582f9b0a82c70af4d0cbcc0647c7f4b38d705c740130bf8823126d",
+  "size_after": 94208,
+  "size_before": 94208,
+  "unchanged": true
+}
