@@ -67,10 +67,13 @@ class TestRouterPriority:
         assert r["intent"] == "ORDER_STATUS"
         assert r["confidence"] == 1.0
 
-    def test_bare_numeric_without_ord_format_is_unknown(self):
-        """A numeric-only message without ORD prefix is UNKNOWN."""
+    def test_bare_numeric_with_order_context_extracts_id(self):
+        """A numeric-only message extracts the order ID as ORD-<digits>."""
         r = route_message("1001")
-        assert r["intent"] == "UNKNOWN"
+        assert r["intent"] == "ORDER_STATUS"
+        assert r["extracted_order_id"] == "ORD-1001"
+        assert r["intent_source"] == "order_id_fallback"
+        assert r["requires_clarification"] is False
 
 
 class TestRouterClarification:

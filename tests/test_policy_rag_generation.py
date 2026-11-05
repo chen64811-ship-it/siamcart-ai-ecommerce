@@ -36,8 +36,24 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from app.agents.policy_evaluator import evaluate_policy_query, validate_policy_response, _validate_policy_response
+from app.agents.policy_evaluator import (
+    evaluate_policy_query,
+    validate_policy_response,
+    _validate_policy_response,
+    _try_deepseek_generation,
+)
 from app.agents.policy_index import retrieve_policy_clauses, get_policy_index_status
+
+
+def _generate_with_policy_context(query: str, fallback: str = "deterministic fallback") -> dict:
+    """Exercise the retained DeepSeek generation path with real policy clauses.
+
+    evaluate_policy_query() no longer calls the LLM (generation moved to
+    llm_generator.py / the orchestrator), so the provider-failure and
+    grounding tests target _try_deepseek_generation directly.
+    """
+    clauses = retrieve_policy_clauses(query)["retrieved_clauses"]
+    return _try_deepseek_generation(query, clauses, fallback)
 from app.agents.router import route_message
 
 
@@ -151,8 +167,15 @@ class TestMockedDeepSeekSuccess:
         mock_client.chat.completions.create.return_value = mock_instance
         mock_openai.return_value = mock_client
 
-        result = evaluate_policy_query("return policy")
-        assert result.get("grounding_validation_passed") is True
+        # Explicit evidence clause: exercise the validation logic itself,
+        # not the mock retriever's ranking quality.
+        clauses = [{
+            "text": "ลูกค้าสามารถขอคืนสินค้าได้ภายใน 14 วันนับจากวันที่ได้รับสินค้า",
+            "source_filename": "return_policy.md",
+        }]
+        result = _try_deepseek_generation("return policy", clauses, "fallback")
+        assert result["validation_passed"] is True
+        assert result["llm_response"]
 
 
 # ── Test 3: Provider timeout ─────────────────────────────────────────
@@ -175,10 +198,9 @@ class TestProviderTimeout:
         mock_client.chat.completions.create.side_effect = APITimeoutError("timeout")
         mock_openai.return_value = mock_client
 
-        result = evaluate_policy_query("return policy")
-        assert result["retrieval_success"] is True
-        assert result.get("llm_fallback_used") is True
-        assert any('\u0E00' <= c <= '\u0E7F' for c in result.get("deterministic_response", ""))
+        result = _generate_with_policy_context("return policy")
+        assert result["error_type"] == "timeout"
+        assert result["llm_response"] is None
 
 
 # ── Test 4: Provider HTTP error ──────────────────────────────────────
@@ -205,9 +227,9 @@ class TestProviderHttpError:
         )
         mock_openai.return_value = mock_client
 
-        result = evaluate_policy_query("return policy")
-        assert result.get("llm_fallback_used") is True
-        assert result.get("retrieval_success") is True
+        result = _generate_with_policy_context("return policy")
+        assert result["error_type"] == "http_error"
+        assert result["llm_response"] is None
 
 
 # ── Test 5: Empty provider output ────────────────────────────────────
@@ -233,8 +255,9 @@ class TestEmptyOutput:
         mock_client.chat.completions.create.return_value = mock_instance
         mock_openai.return_value = mock_client
 
-        result = evaluate_policy_query("return policy")
-        assert result.get("llm_fallback_used") is True
+        result = _generate_with_policy_context("return policy")
+        assert result["error_type"] == "empty_output"
+        assert result["llm_response"] is None
 
 
 # ── Test 6: DeepSeek adds false return period ────────────────────────
@@ -263,10 +286,10 @@ class TestFalseReturnPeriod:
         mock_client.chat.completions.create.return_value = mock_instance
         mock_openai.return_value = mock_client
 
-        result = evaluate_policy_query("return policy")
+        result = _generate_with_policy_context("return policy")
         # Must fall back to deterministic
-        assert result.get("llm_fallback_used") is True
-        assert result.get("grounding_validation_passed") is False
+        assert result["validation_passed"] is False
+        assert result["llm_response"] is None
 
 
 # ── Test 7: DeepSeek changes refund-processing period ────────────────
@@ -294,9 +317,9 @@ class TestChangedRefundPeriod:
         mock_client.chat.completions.create.return_value = mock_instance
         mock_openai.return_value = mock_client
 
-        result = evaluate_policy_query("how long does refund take")
-        assert result.get("llm_fallback_used") is True
-        assert result.get("grounding_validation_passed") is False
+        result = _generate_with_policy_context("how long does refund take")
+        assert result["validation_passed"] is False
+        assert result["llm_response"] is None
 
 
 # ── Test 8: DeepSeek changes currency amount ─────────────────────────
@@ -324,9 +347,9 @@ class TestChangedCurrencyAmount:
         mock_client.chat.completions.create.return_value = mock_instance
         mock_openai.return_value = mock_client
 
-        result = evaluate_policy_query("refund policy")
-        assert result.get("llm_fallback_used") is True
-        assert result.get("grounding_validation_passed") is False
+        result = _generate_with_policy_context("refund policy")
+        assert result["validation_passed"] is False
+        assert result["llm_response"] is None
 
 
 # ── Test 9: DeepSeek claims refund approved ──────────────────────────
@@ -354,9 +377,9 @@ class TestClaimsApproved:
         mock_client.chat.completions.create.return_value = mock_instance
         mock_openai.return_value = mock_client
 
-        result = evaluate_policy_query("refund status")
-        assert result.get("llm_fallback_used") is True
-        assert result.get("grounding_validation_passed") is False
+        result = _generate_with_policy_context("refund status")
+        assert result["validation_passed"] is False
+        assert result["llm_response"] is None
 
 
 # ── Test 10: DeepSeek contradicts exclusion rule ──────────────────────
@@ -441,14 +464,11 @@ class TestTransactionRouting:
 class TestIndexNotRebuilt:
     """ChromaDB index is not rebuilt for each chat request."""
 
-    def test_index_status_persists(self):
-        """get_policy_index_status returns the existing index state."""
-        # Uses the real persistent index at data/chroma/
-        status = get_policy_index_status()
-        assert status["index_exists"] is True or status["chunk_count"] == 0
-        # If the real index exists, it should have chunks
-        if status["index_exists"]:
-            assert status["chunk_count"] > 0
+    def test_index_status_persists(self, built_policy_index, chroma_session_dir):
+        """get_policy_index_status reports the built index state."""
+        status = get_policy_index_status(chroma_dir=chroma_session_dir)
+        assert status["index_exists"] is True
+        assert status["chunk_count"] > 0
 
     def test_retrieval_uses_existing_index(self):
         """Retrieval works without rebuilding."""

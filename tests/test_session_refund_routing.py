@@ -179,8 +179,12 @@ def tmp_db():
 
 
 @pytest.fixture(scope="module")
-def client():
-    """Async HTTP client over the FastAPI app (no lifespan / no real DB init)."""
+def client(tmp_db):
+    """Async HTTP client over the FastAPI app (no lifespan / no real DB init).
+
+    Depends on tmp_db so the temporary SQLite database (with the ORD-1029
+    fixture) is installed before any request is served.
+    """
     transport = ASGITransport(app=app)
     c = AsyncClient(transport=transport, base_url="http://test")
     yield c

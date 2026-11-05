@@ -538,9 +538,12 @@ async def test_ai_replies_are_thai(client, tmp_db):
 
 def test_ui_mark_as_shipped_button_rules():
     """12a. The Order Details UI shows 'Simulate Shipment' only for
-    paid + processing + not_shipped orders, 'Mark Delivered' only while in
-    transit, and the shipment section shows the status, courier, tracking
-    number, lifecycle timestamps and the demo note (Task 8D requirements)."""
+    processing/confirmed + not_shipped orders (the backend
+    SHIPPABLE_ORDER_STATUSES_8D gate — COD orders stay payment-pending until
+    delivery and must not be locked out of shipping), 'Mark Delivered' only
+    while in transit, and the shipment section shows the status, courier,
+    tracking number, lifecycle timestamps and the demo note (Task 8D
+    requirements)."""
     js = _read("app/static/js/orders.js")
 
     # The legacy 8C rule function still exists (processing only).
@@ -549,13 +552,15 @@ def test_ui_mark_as_shipped_button_rules():
     assert 'os === "processing"' in body
     assert "return os === \"processing\";" in body
 
-    # Task 8D — Simulate Shipment gate: paid + processing + not_shipped.
+    # Task 8D — Simulate Shipment gate mirrors the backend: processing or
+    # confirmed + not_shipped. No payment gate: COD settles on delivery.
     i = js.index("function canSimulateShipment(order)")
     ss = js[i:js.index("function canDeliver(order)")]
-    assert 'ps === "paid"' in ss
     assert 'os === "processing"' in ss
+    assert 'os === "confirmed"' in ss
     assert 'ss === "not_shipped"' in ss
-    assert "return ps === \"paid\" && os === \"processing\" && ss === \"not_shipped\";" in ss
+    assert 'ps === "paid"' not in ss
+    assert "return (os === \"processing\" || os === \"confirmed\") && ss === \"not_shipped\";" in ss
 
     # Task 8D — Mark Delivered gate: only while in transit.
     i = js.index("function canDeliver(order)")

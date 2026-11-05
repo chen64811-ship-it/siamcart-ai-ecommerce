@@ -19,7 +19,16 @@ from app.db.orders import query_order, init_database
 from app.config import DATA_DIR
 
 
-ORDER_ID_PATTERN = re.compile(r"ORD[-]?\d{4}", re.IGNORECASE)
+# Relaxed order-id matching — mirrors app/agents/router.py (demo UX fix):
+# "ORD-1001" / "ORD1001" / "ORD 1001" / 3-6 digit IDs; bare digits are
+# handled by _extract_order_id with explicit order context only.
+ORDER_ID_PATTERN = re.compile(r"\bORD[\s\-]*(\d{3,6})\b", re.IGNORECASE)
+
+_ORDER_WORD_RE = re.compile(
+    r"\border\b|\borders\b|\bord\b|คำสั่งซื้อ|ออเดอร์|เลขคำสั่งซื้อ",
+    re.IGNORECASE,
+)
+_CURRENCY_ADJACENT_RE = re.compile(r"\d{3,6}\s*(baht|บาท|thb|฿)", re.IGNORECASE)
 
 # Intent keywords — same as before, used for data-intent only
 # Dict order = priority (first matching intent wins). Task 8D adds the
@@ -30,6 +39,9 @@ _INTENT_KEYWORDS: Dict[str, list] = {
         "when will it arrive", "when will it get", "when will",
         "estimated delivery", "estimated arrival", "arrival date",
         "delivery date", "delivery estimate", "eta",
+        # Relaxed phrasing (demo UX fix): "when it will be delivered"
+        # inversion, the "deliverd" typo, and a bare "when?" follow-up.
+        "when it will", "will be delivered", "will be deliverd", "when?",
         "จะถึงเมื่อไหร่", "ถึงเมื่อไหร่", "เมื่อไหร่จะถึง", "ถึงเมื่อไร",
         "เมื่อไหร่จะได้", "ส่งถึงเมื่อไหร่", "จัดส่งถึงเมื่อไหร่",
         "ถึงตอนไหน", "กี่วันจะถึง", "วันไหนจะถึง",
@@ -64,13 +76,25 @@ _INTENT_KEYWORDS: Dict[str, list] = {
 
 
 def _extract_order_id(message: str) -> Optional[str]:
-    """Extract order ID like ORD-1001 or ORD1001."""
+    """Extract and normalize an order ID (relaxed matching, demo UX fix).
+
+    "ORD-1001" / "ORD1001" / "ORD 1001" all normalize to "ORD-1001".
+    Bare digits ("1001") match only when the message is just the number or
+    explicitly names an order — currency amounts never match.
+    """
     match = ORDER_ID_PATTERN.search(message)
     if match:
-        raw = match.group(0).upper()
-        if "-" not in raw:
-            raw = raw[:3] + "-" + raw[3:]
-        return raw
+        return f"ORD-{match.group(1)}"
+
+    msg = (message or "").strip()
+    numeric_only = re.fullmatch(r"#?\s*\d{3,6}\s*[?.!]*", msg)
+    if not (numeric_only or _ORDER_WORD_RE.search(msg)):
+        return None
+    if _CURRENCY_ADJACENT_RE.search(msg):
+        return None
+    digits = re.search(r"(?<!\d)(\d{3,6})(?!\d)", msg)
+    if digits:
+        return f"ORD-{digits.group(1)}"
     return None
 
 

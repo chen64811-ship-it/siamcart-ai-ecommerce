@@ -71,6 +71,57 @@ async def test_jwt_users_can_only_access_their_own_orders(v2_database):
 
 
 @pytest.mark.asyncio
+async def test_order_list_isolated_and_guest_payment_requires_login(v2_database):
+    """P1-1 — logged-in users only list their own orders; guests must log in
+    before the (demo) payment step."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        alice = await client.post(
+            "/api/auth/register",
+            json={"email": "alice-list@example.com", "password": "password-123", "display_name": "Alice"},
+        )
+        bob = await client.post(
+            "/api/auth/register",
+            json={"email": "bob-list@example.com", "password": "password-456", "display_name": "Bob"},
+        )
+        assert alice.status_code == bob.status_code == 201
+        alice_headers = {"Authorization": f"Bearer {alice.json()['access_token']}"}
+        bob_headers = {"Authorization": f"Bearer {bob.json()['access_token']}"}
+
+        payload = {
+            "customer_name": "Alice",
+            "customer_email": "alice-list@example.com",
+            "customer_phone": "0800000000",
+            "shipping_address": "Bangkok",
+            "payment_method": "bank_transfer",
+            "items": [{"product_id": "PROD-001", "quantity": 1}],
+        }
+        a1 = await client.post("/api/orders", headers=alice_headers, json=payload)
+        a2 = await client.post("/api/orders", headers=alice_headers, json=payload)
+        assert a1.status_code == a2.status_code == 201
+        alice_order_ids = {a1.json()["order_id"], a2.json()["order_id"]}
+
+        bob_payload = dict(payload, customer_email="bob-list@example.com", customer_name="Bob")
+        b1 = await client.post("/api/orders", headers=bob_headers, json=bob_payload)
+        assert b1.status_code == 201
+        bob_order_id = b1.json()["order_id"]
+
+        # Alice's list contains ONLY her orders (never Bob's).
+        alice_list = await client.get("/api/orders", headers=alice_headers)
+        assert alice_list.status_code == 200
+        listed_ids = {o["order_id"] for o in alice_list.json()["orders"]}
+        assert alice_order_ids.issubset(listed_ids)
+        assert bob_order_id not in listed_ids
+
+        # A guest cannot reach the payment step (401) when auth is required.
+        guest_payment = await client.post(
+            f"/api/orders/{a1.json()['order_id']}/demo-payment",
+            json={"confirm_demo_payment": True},
+        )
+        assert guest_payment.status_code == 401
+
+
+@pytest.mark.asyncio
 async def test_demo_login_is_explicit_and_reuses_labelled_account(v2_database, monkeypatch):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:

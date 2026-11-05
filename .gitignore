@@ -62,3 +62,10 @@ scripts/probe_cart.py
 Thumbs.db
 .vscode/
 .idea/
+
+# ── Evaluation runtime artifacts (DBs, vector indexes, raw LLM output) ──
+evaluation/final_revision_2026/runtime/
+evaluation/**/chroma/
+evaluation/**/*.db
+evaluation/**/*.sqlite3
+evaluation/**/*_raw.jsonl

@@ -620,7 +620,9 @@ async def test_no_500_when_policy_retrieval_fails(client, monkeypatch):
     assert data["intent"] in ("RETURN_REFUND", "STORE_POLICY")
     assert data["response"]
     _assert_thai_dominant(data["response"], label="policy fallback")
-    assert data["retrieved_chunks"] in (0, None)
+    # Degradation may fall back to keyword retrieval (chunks > 0); the
+    # contract is HTTP 200 + a Thai answer, never a 500.
+    assert data["retrieved_chunks"] is None or isinstance(data["retrieved_chunks"], int)
 
 
 @pytest.mark.asyncio
@@ -630,3 +632,45 @@ async def test_no_500_when_llm_unavailable(client):
     assert r.status_code == 200
     assert r.json()["response"]
     _assert_thai_dominant(r.json()["response"], label="policy answer")
+
+
+# ── P1-3: consecutive unrecognized turns → examples / human help ────────
+
+
+@pytest.mark.asyncio
+async def test_consecutive_unrecognized_offers_examples_and_human(client):
+    """After N consecutive unrecognized turns the assistant offers example
+    questions and a path to a human agent instead of repeating itself."""
+    sid = "unrecognized-streak"
+
+    first = await _chat(client, "asdfghjkl", sid)
+    assert first.status_code == 200
+    d1 = first.json()
+    assert d1["intent"] == "UNKNOWN"
+    assert d1["escalation_created"] is False
+    assert "ไม่เข้าใจ" in d1["response"]  # normal clarification first
+
+    second = await _chat(client, "zxcvbnm", sid)
+    assert second.status_code == 200
+    d2 = second.json()
+    assert d2["intent"] == "UNKNOWN"
+    assert d2["escalation_created"] is True
+    assert "ตัวอย่าง" in d2["response"]      # concrete example questions
+    assert "เจ้าหน้าที่" in d2["response"]   # human-agent path
+    _assert_thai_dominant(d2["response"], label="escalation")
+
+
+@pytest.mark.asyncio
+async def test_recognized_turn_resets_unrecognized_streak(client):
+    """A recognized turn resets the streak, so the next unknown turn asks
+    normally again instead of escalating."""
+    sid = "unrecognized-reset"
+
+    await _chat(client, "asdfghjkl", sid)          # streak = 1
+    ok = await _chat(client, "Where is order ORD-8201?", sid)  # recognized
+    assert ok.json()["intent"] == "ORDER_STATUS"
+
+    again = await _chat(client, "qwertyuiop", sid)  # streak reset → 1 again
+    assert again.json()["intent"] == "UNKNOWN"
+    assert again.json()["escalation_created"] is False
+    assert "ไม่เข้าใจ" in again.json()["response"]

@@ -384,10 +384,10 @@ def test_cod_tracker_response_explains_pay_on_delivery(tmp_db):
     resp = result["response"]
     assert "ORD-1029" in resp
     assert "Cash on Delivery" in resp
-    assert "pending" in resp
-    assert "delivery" in resp
-    assert "currently processing" in resp
-    assert "has not yet been shipped" in resp
+    # Task 5D-7: the customer-facing response is Thai.
+    assert "เก็บเงินปลายทาง" in resp
+    assert "ยังไม่มีการเรียกเก็บเงิน" in resp
+    assert "ได้รับสินค้า" in resp
     assert "if you have already paid" not in resp
 
 
@@ -407,10 +407,9 @@ def test_paid_order_tracker_response_distinguishes_statuses(tmp_db):
     assert result["response_source"] == "deterministic"
     resp = result["response"]
     assert "ORD-2001" in resp
-    assert "payment has been received" in resp
-    assert "paid at 2026-08-02T14:00:00" in resp
-    assert "currently processing" in resp
-    assert "has not yet been shipped" in resp
+    # Task 8D intent-specific ORDER_STATUS answer (Thai): order stage + shipment.
+    assert "อยู่ระหว่างดำเนินการ" in resp
+    assert "ยังไม่ได้จัดส่ง" in resp
     assert "Confirm Demo Payment" not in resp
 
 
@@ -438,7 +437,8 @@ def test_no_deepseek_called_for_order_status(tmp_db):
 
     assert result["order_id"] == "ORD-1001"
     assert result["response_source"] == "deterministic"
-    assert result["llm_fallback_used"] is True
+    # LLM is disabled by default: this is not a fallback, it was never attempted.
+    assert result["llm_fallback_used"] is False
     assert "ORD-1001" in result["response"]
 
 

@@ -114,8 +114,12 @@ def tmp_db():
 
 
 @pytest.fixture(scope="module")
-def client():
-    """Async HTTP client over the FastAPI app (no lifespan / no real DB init)."""
+def client(tmp_db):
+    """Async HTTP client over the FastAPI app (no lifespan / no real DB init).
+
+    Depends on tmp_db so the temporary SQLite database is installed before
+    any request is served.
+    """
     transport = ASGITransport(app=app)
     c = AsyncClient(transport=transport, base_url="http://test")
     yield c
@@ -230,7 +234,11 @@ async def test_unsupported_size_question_does_not_invent_data(client):
         resp = await _chat(client, question, "t9", "PROD-008")
         assert resp.status_code == 200
         data = resp.json()
-        assert "does not provide" in data["response"].lower(), question
+        # Task 5D-7: the customer-facing answer is Thai.
+        assert (
+            "ไม่ได้ให้ข้อมูล" in data["response"]
+            or "does not provide" in data["response"].lower()
+        ), question
         assert data["response_source"] == "product_catalog_deterministic"
 
 

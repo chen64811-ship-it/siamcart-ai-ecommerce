@@ -383,6 +383,28 @@ async def test_mark_delivered_succeeds(client, tmp_db):
 
 
 @pytest.mark.asyncio
+async def test_cod_delivery_settles_payment(client, tmp_db):
+    """A pending Cash-on-Delivery order settles at the door: marking the
+    parcel delivered also records payment_status='paid' with paid_at equal
+    to delivered_at; the response reports cod_settled_on_delivery."""
+    created = await _create_order(client, method="cash_on_delivery")
+    oid = created["order_id"]
+    assert created["payment_status"] == "pending"
+
+    await _ship(client, oid)
+    resp = await _deliver(client, oid)
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["cod_settled_on_delivery"] is True
+    assert body["payment_status"] == "paid"
+    assert body["paid_at"] == body["delivered_at"]
+
+    row = _order_row(tmp_db, oid)
+    assert row["payment_status"] == "paid"
+    assert row["paid_at"] == row["delivered_at"]
+
+
+@pytest.mark.asyncio
 async def test_repeated_delivery_idempotent(client, tmp_db):
     """14. Repeating delivery returns the current state and delivered_at is
     never overwritten."""
