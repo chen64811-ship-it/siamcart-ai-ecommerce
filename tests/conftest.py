@@ -27,21 +27,37 @@ EMBEDDING_DIM = 384  # matches paraphrase-multilingual-MiniLM-L12-v2
 
 
 class _MockSentenceTransformer:
-    """A deterministic fake that never loads PyTorch or HF models."""
+    """Deterministic bag-of-words fake that never loads PyTorch or HF models.
+
+    Each token is hashed into fixed positions of an EMBEDDING_DIM vector and
+    the result is L2-normalised. Texts that share vocabulary therefore get
+    similar vectors, so policy-retrieval tests exercise real ranking
+    semantics (return query → return policy) without a model download.
+    """
 
     def encode(self, sentences, **kwargs):
-        """Return a fixed-dimension vector based on hash of input text."""
+        """Return an EMBEDDING_DIM bag-of-words vector per input text."""
         import hashlib
+        import re
 
         if isinstance(sentences, str):
             sentences = [sentences]
 
         vectors = []
         for text in sentences:
-            h = hashlib.sha256(text.encode("utf-8")).digest()
-            raw = np.frombuffer(h, dtype=np.uint8)[:EMBEDDING_DIM].astype(np.float32)
-            raw = (raw / 255.0) * 0.2 - 0.1
-            vectors.append(raw)
+            vec = np.zeros(EMBEDDING_DIM, dtype=np.float32)
+            tokens = re.findall(r"[0-9A-Za-z\u0E00-\u0E7F]+", text.lower())
+            for token in tokens:
+                h = hashlib.sha256(token.encode("utf-8")).digest()
+                for offset in range(0, EMBEDDING_DIM, len(h)):
+                    chunk = h[: min(len(h), EMBEDDING_DIM - offset)]
+                    vec[offset:offset + len(chunk)] += (
+                        np.frombuffer(chunk, dtype=np.uint8).astype(np.float32) / 255.0
+                    )
+            norm = float(np.linalg.norm(vec))
+            if norm > 0:
+                vec /= norm
+            vectors.append(vec)
 
         arr = np.stack(vectors)
         if len(sentences) == 1:
@@ -55,6 +71,19 @@ class _MockSentenceTransformer:
 def _mock_get_embedding_model():
     """Return a mock embedding model — no PyTorch, no HF download."""
     return _MockSentenceTransformer()
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _use_mock_embeddings_everywhere():
+    """Patch the embedding model for the whole test session.
+
+    build_policy_index() and retrieve_policy_clauses() must share the SAME
+    vector space. If the index is built with the mock but queried with the
+    real sentence-transformer (or vice versa), ChromaDB compares vectors
+    from incompatible spaces and returns arbitrary policy types.
+    """
+    with patch("app.agents.policy_index._get_embedding_model", _mock_get_embedding_model):
+        yield
 
 
 # ── Session-scoped ChromaDB directory ───────────────────────────────

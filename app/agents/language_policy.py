@@ -33,6 +33,35 @@ THAI_REQUEST_RESPONSE = (
     "หรือการจัดส่งได้เลยค่ะ"
 )
 
+# ── Unified Thai error responses (P0-2) ────────────────────────────────
+# Customer-facing API errors are returned in Thai, consistent with the
+# fixed-Thai output policy. Internal/admin details remain in the original
+# HTTPException detail field for API contracts.
+
+VALIDATION_ERROR_RESPONSE = (
+    "ข้อมูลที่ส่งมาไม่ถูกต้องหรือไม่ครบถ้วน "
+    "กรุณาตรวจสอบข้อมูลและลองใหม่อีกครั้งค่ะ"
+)
+
+SERVER_ERROR_RESPONSE = (
+    "ขออภัย ระบบเกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้งในภายหลังค่ะ"
+)
+
+_THAI_STATUS_MESSAGES = {
+    400: "คำขอไม่ถูกต้อง กรุณาตรวจสอบข้อมูลและลองใหม่อีกครั้งค่ะ",
+    401: "กรุณาเข้าสู่ระบบก่อนดำเนินการค่ะ",
+    403: "คุณไม่มีสิทธิ์เข้าถึงข้อมูลนี้ค่ะ",
+    404: "ไม่พบข้อมูลที่ต้องการ กรุณาตรวจสอบอีกครั้งค่ะ",
+    409: "ไม่สามารถดำเนินการได้ในขณะนี้ กรุณาตรวจสอบสถานะแล้วลองใหม่อีกครั้งค่ะ",
+    422: VALIDATION_ERROR_RESPONSE,
+    500: SERVER_ERROR_RESPONSE,
+}
+
+
+def thai_status_message(status_code: int) -> str:
+    """Thai customer-facing message for a generic HTTP status code."""
+    return _THAI_STATUS_MESSAGES.get(status_code, SERVER_ERROR_RESPONSE)
+
 _THAI_RE = re.compile(r"[\u0E00-\u0E7F]")
 _EN_LETTER_RE = re.compile(r"[A-Za-z]")
 

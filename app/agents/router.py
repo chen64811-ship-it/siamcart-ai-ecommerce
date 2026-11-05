@@ -11,7 +11,29 @@ import re
 from typing import Dict, List, Optional, Any, Tuple
 
 # ── Order ID pattern ──────────────────────────────────────────────────
-ORDER_ID_PATTERN = re.compile(r"ORD[-]?\d{4}", re.IGNORECASE)
+# Relaxed order-id matching (demo UX fix):
+#   - "ORD-1001" / "ORD1001" / "ORD 1001" / "ord - 1001" all normalize to
+#     "ORD-1001"; 3-6 digit IDs accepted (seed data uses 4 digits).
+#   - Bare digits ("1001", "#1001") are handled by _extract_order_id below,
+#     gated by explicit order context so payment amounts never match.
+ORDER_ID_PATTERN = re.compile(r"\bORD[\s\-]*(\d{3,6})\b", re.IGNORECASE)
+
+# Bare digit run (3-6 digits, not glued to other digits).
+_BARE_ORDER_DIGITS_RE = re.compile(r"(?<!\d)(\d{3,6})(?!\d)")
+
+# Whole message is just an order number ("1001", "#1001", "1001?").
+_NUMERIC_ONLY_RE = re.compile(r"^\s*#?\s*\d{3,6}\s*[?.!]*\s*$")
+
+# Explicit order vocabulary that licenses bare-digit extraction
+# ("order 1001", "คำสั่งซื้อ 1001").
+_ORDER_WORD_RE = re.compile(
+    r"\border\b|\borders\b|\bord\b|คำสั่งซื้อ|ออเดอร์|เลขคำสั่งซื้อ",
+    re.IGNORECASE,
+)
+
+# Currency adjacency blocks bare-digit extraction
+# ("โอนเงิน 1290 บาท", "paid 1290 baht" are amounts, not order IDs).
+_CURRENCY_ADJACENT_RE = re.compile(r"\d{3,6}\s*(baht|บาท|thb|฿)", re.IGNORECASE)
 
 
 # ── Intent taxonomy ───────────────────────────────────────────────────
@@ -24,6 +46,10 @@ _INTENT_PRIORITY: List[str] = [
     "SHIPMENT_STATUS",
     "ORDER_STATUS",
     "RETURN_REFUND",
+    # Demo UX extension — deterministic product comparison. Kept AFTER
+    # RETURN_REFUND so refund/policy phrases win; the STORE_POLICY pre-scan
+    # still runs before everything, so "compare return policy" stays policy.
+    "PRODUCT_COMPARE",
     "STORE_POLICY",
     "GREETING",
     "OUT_OF_SCOPE",
@@ -47,6 +73,9 @@ _AGENT_MAP = {
     "SHIPMENT_STATUS": "transaction_tracker",
     "TRACKING_NUMBER": "transaction_tracker",
     "RETURN_REFUND": "store_policy_evaluator",
+    # Demo UX extension — handled by the deterministic Product Catalog
+    # service (app/services/product_catalog.py), never an evaluated agent.
+    "PRODUCT_COMPARE": "product_catalog",
     "STORE_POLICY": "store_policy_evaluator",
     "RESEARCH_INFO": "general_response",
     "GREETING": "general_response",
@@ -131,6 +160,20 @@ _INTENT_PATTERNS: Dict[str, List[str]] = {
         "จัดส่งถึงเมื่อไหร่",
         "ส่งถึงเมื่อไหร่",
         "กี่วันจะถึง",
+        # Relaxed phrasing (demo UX fix): natural shipped/received questions.
+        # Kept out of the evaluated-scenario phrasing set in Transaction
+        # Tracker; the router refinement does not change evidence fields.
+        "shipped",
+        "has it shipped",
+        # ETA phrasing variants, including the common "when it will …"
+        # inversion and the "deliverd" typo (demo UX fix).
+        "when it will",
+        "will be delivered",
+        "will be deliverd",
+        "when will it be delivered",
+        "eta",
+        "ยังไม่ได้รับของ",
+        "ยังไม่ได้รับสินค้า",
     ],
     "ORDER_STATUS": [
         "สถานะคำสั่งซื้อ",
@@ -146,6 +189,40 @@ _INTENT_PATTERNS: Dict[str, List[str]] = {
         "ขั้นตอน",
         "ไปถึงไหน",
         "ถึงไหน",
+        # Relaxed phrasing (demo UX fix): natural where-is-my-order questions
+        # without an explicit ID. Specific phrases only — a bare "my order"
+        # would hijack "cancel my order" into ORDER_STATUS.
+        "where is my order",
+        "where's my order",
+        "where is the order",
+        "where is order",
+        "คำสั่งซื้ออยู่ที่ไหน",
+        "ออเดอร์อยู่ที่ไหน",
+        "ยังไม่ถึง",
+    ],
+    "PRODUCT_COMPARE": [
+        # Demo UX extension — deterministic product comparison. Checked
+        # after RETURN_REFUND (refund phrases win) and before STORE_POLICY
+        # (whose questions are already captured by the earlier pre-scan).
+        "compare",
+        "comparison",
+        "compare with",
+        "versus",
+        " vs ",
+        "vs.",
+        "difference between",
+        "which is better",
+        "which one is better",
+        "alternatives",
+        "other options",
+        "ตัวไหนดีกว่า",
+        "อันไหนดีกว่า",
+        "เปรียบเทียบ",
+        "เทียบ",
+        "ต่างกัน",
+        "ตัวอื่น",
+        "แบบอื่น",
+        "มีอะไรอีก",
     ],
     "RETURN_REFUND": [
         # Priority: longer/more specific phrases first to avoid false positives
@@ -214,6 +291,11 @@ _INTENT_PATTERNS: Dict[str, List[str]] = {
         "ยกเลิก",
         "ยกเลิกคำสั่งซื้อ",
         "change address",
+        "change my address",
+        "update address",
+        "update my address",
+        "change delivery address",
+        "change shipping address",
         "change order",
         "modify order",
         "edit order",
@@ -325,13 +407,29 @@ def _is_greeting_message(message: str) -> bool:
 
 
 def _extract_order_id(message: str) -> Optional[str]:
-    """Extract order ID like ORD-1001 or ORD1001."""
+    """Extract and normalize an order ID (relaxed matching, demo UX fix).
+
+    - "ORD-1001" / "ORD1001" / "ORD 1001" / "ord-1001" → "ORD-1001"
+    - 3-6 digit IDs accepted (seed data uses 4 digits)
+    - Bare digits ("1001", "#1001") accepted only with order context: either
+      the whole message is just the number, or the message names an order
+      ("order 1001", "คำสั่งซื้อ 1001"). Currency amounts
+      ("โอนเงิน 1290 บาท", "paid 1290 baht") never match.
+    """
     match = ORDER_ID_PATTERN.search(message)
     if match:
-        raw = match.group(0).upper()
-        if "-" not in raw:
-            raw = raw[:3] + "-" + raw[3:]
-        return raw
+        return f"ORD-{match.group(1)}"
+
+    msg = (message or "").strip()
+    if not msg:
+        return None
+    if not (_NUMERIC_ONLY_RE.match(msg) or _ORDER_WORD_RE.search(msg)):
+        return None
+    if _CURRENCY_ADJACENT_RE.search(msg):
+        return None
+    digits = _BARE_ORDER_DIGITS_RE.search(msg)
+    if digits:
+        return f"ORD-{digits.group(1)}"
     return None
 
 

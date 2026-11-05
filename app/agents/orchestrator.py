@@ -42,7 +42,24 @@ from app.config import DEEPSEEK_ENABLED
 # Task 5D-7: every customer-facing response is written in natural Thai.
 # Input language is never allowed to switch the output to English.
 
-_CLARIFICATION_RESPONSE = "กรุณาระบุหมายเลขคำสั่งซื้อของคุณด้วยค่ะ"
+_ASK_ORDER_ID_RESPONSE = "กรุณาระบุหมายเลขคำสั่งซื้อของคุณด้วยค่ะ เช่น ORD-1001 ค่ะ"
+
+_CLARIFICATION_RESPONSE = (
+    "ขออภัยค่ะ ฉันยังไม่เข้าใจคำถามนี้ ฉันช่วยเรื่องสถานะคำสั่งซื้อ การชำระเงิน การจัดส่ง "
+    "นโยบายการคืนสินค้า และข้อมูลสินค้าได้ค่ะ ถ้าต้องการทราบสถานะคำสั่งซื้อ "
+    "กรุณาระบุหมายเลขคำสั่งซื้อ เช่น ORD-1001 ค่ะ"
+)
+
+# 1-2 digit input ("1", "2", "12") is almost always an incomplete order
+# number or a menu choice — answer with a targeted prompt instead of the
+# generic capability list every time.
+_SHORT_DIGITS_RE = re.compile(r"^\s*\d{1,2}\s*[?.!]*\s*$")
+
+_SHORT_NUMERIC_RESPONSE = (
+    "คุณพิมพ์ตัวเลขสั้น ๆ ค่ะ หากต้องการตรวจสอบคำสั่งซื้อ "
+    "กรุณาระบุหมายเลขคำสั่งซื้อ 4 หลัก เช่น 1001 หรือ ORD-1001 ค่ะ "
+    "หรือจะพิมพ์คำถามเต็ม ๆ เช่น 'นโยบายการคืนสินค้า' ก็ได้ค่ะ"
+)
 
 _GREETING_RESPONSE = (
     "สวัสดีค่ะ ยินดีต้อนรับสู่ SiamCart "
@@ -76,6 +93,18 @@ _UNKNOWN_RESPONSE = (
     "ขออภัย ฉันไม่เข้าใจคำถามของคุณ "
     "กรุณาถามเกี่ยวกับสถานะคำสั่งซื้อ การชำระเงิน "
     "หรือการจัดส่งนะคะ"
+)
+
+# P1-3 — after this many consecutive unrecognized turns, stop repeating the
+# generic "I don't understand" prompt and instead offer concrete examples plus
+# an option to reach a human agent.
+_UNRECOGNIZED_ESCALATION_THRESHOLD = 2
+
+_UNRECOGNIZED_HELP_RESPONSE = (
+    "ฉันยังไม่แน่ใจว่าคุณต้องการสอบถามเรื่องอะไรค่ะ "
+    "ลองถามด้วยตัวอย่างเหล่านี้ดูนะคะ เช่น "
+    "'สถานะคำสั่งซื้อ ORD-1001' 'ชำระเงินแล้วหรือยัง' หรือ 'นโยบายการคืนสินค้า' ค่ะ "
+    "หรือหากต้องการให้เจ้าหน้าที่ช่วยเหลือเพิ่มเติม โปรดพิมพ์ 'ติดต่อเจ้าหน้าที่' ค่ะ"
 )
 
 _DB_PATH: Optional[str] = None
@@ -139,7 +168,7 @@ def _shipment_notice_thai(notification_sent, notification_sent_at) -> str:
 def _not_found_response(order_id: Optional[str], message: str) -> str:
     """Thai unknown-order response (Task 5D-7)."""
     if not order_id:
-        return _CLARIFICATION_RESPONSE
+        return _ASK_ORDER_ID_RESPONSE
     return (
         f"ขออภัย ไม่พบข้อมูลคำสั่งซื้อ {order_id} "
         f"กรุณาตรวจสอบหมายเลขคำสั่งซื้ออีกครั้งค่ะ"
@@ -237,7 +266,10 @@ def _txn_status_response(message: str, evidence: Dict, intent: str) -> str:
                 + tracking_part
                 + notice
             )
-        return f"คำสั่งซื้อ {order_id} {_order_phrase_thai(order_status)}ค่ะ"
+        base = f"คำสั่งซื้อ {order_id} {_order_phrase_thai(order_status)}ค่ะ"
+        if shipment_status == "not_shipped":
+            base += f" {_shipment_phrase_thai(shipment_status)}ค่ะ"
+        return base
 
     # ── PAYMENT_STATUS — focus on payment facts ────────────────────────
     if intent == "PAYMENT_STATUS":
@@ -367,6 +399,18 @@ def _set_last_completed(session_id: str, intent: str):
     _SESSION_STORE.update_state(session_id, {"last_completed_intent": intent})
 
 
+def _bump_unrecognized(session_id: str) -> int:
+    """Increment the consecutive-unrecognized counter and return it."""
+    state = _SESSION_STORE.get_session(session_id)["state"]
+    streak = int(state.get("unrecognized_streak") or 0) + 1
+    _SESSION_STORE.update_state(session_id, {"unrecognized_streak": streak})
+    return streak
+
+
+def _reset_unrecognized(session_id: str) -> None:
+    _SESSION_STORE.update_state(session_id, {"unrecognized_streak": 0})
+
+
 def remove_order_context(session_id: str) -> None:
     """Explicit user action: clear the session active order.
 
@@ -391,6 +435,7 @@ def reset_session(session_id: str) -> None:
         "last_agent": None,
         "last_completed_intent": None,
         "last_assistant_action": None,
+        "unrecognized_streak": 0,
     })
 
 
@@ -479,10 +524,25 @@ def _normalize_order_id(order_id: Optional[str]) -> Optional[str]:
     if not order_id:
         return None
     raw = str(order_id).strip().upper()
-    m = re.match(r"^ORD[-]?(\d{4})$", raw)
+    m = re.match(r"^ORD[-]?(\d{3,6})$", raw)
     if not m:
         return None
     return f"ORD-{m.group(1)}"
+
+
+# Relaxed demo follow-up: a bare 3-6 digit run in a continuation message
+# ("1001 i dont like it") is treated as an order reference, unless it is
+# adjacent to a currency unit (then it is an amount, not an ID).
+_BARE_DIGITS_RE = re.compile(r"(?<!\d)(\d{3,6})(?!\d)")
+_CURRENCY_AMOUNT_RE = re.compile(r"\d{3,6}\s*(baht|บาท|thb|฿)", re.IGNORECASE)
+
+
+def _extract_loose_order_id(message: str) -> Optional[str]:
+    """Loose bare-digit order extraction for continuation messages."""
+    if _CURRENCY_AMOUNT_RE.search(message or ""):
+        return None
+    m = _BARE_DIGITS_RE.search(message or "")
+    return f"ORD-{m.group(1)}" if m else None
 
 
 def _resolve_order_context(
@@ -505,6 +565,12 @@ def _resolve_order_context(
     if msg_order_id:
         return msg_order_id
 
+    # Continuation messages often name the order as bare digits
+    # ("1001 i dont like it") without any order vocabulary.
+    msg_order_id = _normalize_order_id(_extract_loose_order_id(message))
+    if msg_order_id:
+        return msg_order_id
+
     req_order_id = _normalize_order_id(request_order_id)
     if req_order_id:
         return req_order_id
@@ -519,6 +585,12 @@ def _resolve_order_context(
 
     # Only fall back to the active order for order-focused messages.
     if intent in _TXN_INTENTS_EXT:
+        return active_order_id
+    # A genuine refund/cancellation REQUEST continues the order the user is
+    # already discussing instead of demanding the ID again. A policy question
+    # ("Can I return this product?") must stay on the Store Policy Evaluator
+    # route and never inherit order context.
+    if intent == "RETURN_REFUND" and _is_refund_request(message):
         return active_order_id
     if intent == "OUT_OF_SCOPE" and _CANCEL_RE.search(message or ""):
         return active_order_id
@@ -908,7 +980,29 @@ def _extract_reason(message: str, order_id: Optional[str]) -> Optional[str]:
     text = re.sub(r"^[,;\s:\-]+", "", text)
     text = re.sub(r"[,;\s:\-]+$", "", text)
     text = re.sub(r"\s+", " ", text).strip()
-    return text or None
+    if not text:
+        return None
+    # P0-1: a pure number or an extremely short reply is not a real reason.
+    # 3-6 digit runs are parsed as an order ID by _extract_loose_order_id,
+    # so they never surface here as a reason.
+    if re.fullmatch(r"\d+", text) or len(text) < 3:
+        return None
+    return text
+
+
+def _is_weak_reason_input(message: str) -> bool:
+    """True when a reply is too terse to be a real refund/cancellation reason.
+
+    Pure numbers ("1", "123", "1001") and very short replies ("no", "ok")
+    are rejected so the assistant asks for a real description instead of
+    recording "1" or "no" as the customer's reason.
+    """
+    text = (message or "").strip()
+    if not text:
+        return True
+    if re.fullmatch(r"\d+", text):
+        return True
+    return len(text) < 3
 
 
 def _ask_refund_details(message: str, need_reason: bool = True) -> str:
@@ -922,8 +1016,17 @@ def _ask_refund_reason(message: str) -> str:
     return "ขอบคุณค่ะ กรุณาระบุเหตุผลที่ต้องการคืนสินค้าหรือยกเลิกด้วยค่ะ"
 
 
+def _ask_real_reason(message: str) -> str:
+    """P0-1: prompt for a real reason when the reply is digits/too short."""
+    return (
+        "ข้อมูลที่ได้รับยังสั้นเกินไปหรือเป็นเพียงตัวเลขค่ะ "
+        "กรุณาอธิบายเหตุผลที่ต้องการคืนสินค้าหรือยกเลิกจริง ๆ "
+        "เช่น 'สินค้าไม่ตรงกับที่สั่ง' หรือ 'ไม่ชอบสินค้า' ค่ะ"
+    )
+
+
 def _ask_order_id(message: str) -> str:
-    return _CLARIFICATION_RESPONSE
+    return _ASK_ORDER_ID_RESPONSE
 
 
 def _deterministic_llm_result(text: str) -> Dict:
@@ -1089,7 +1192,12 @@ def _run_refund_flow(
     if not reason:
         _set_pending(session_id, "RETURN_REFUND", ["reason"],
                      new_collected, "store_policy_evaluator", "ask_missing_slots")
-        text = _ask_refund_reason(message)
+        # P0-1: a digits-only or very short reply is not a real reason — ask
+        # for a real description rather than echoing the generic prompt.
+        if _is_weak_reason_input(message):
+            text = _ask_real_reason(message)
+        else:
+            text = _ask_refund_reason(message)
         return {
             "response": text,
             "handler": "store_policy_evaluator",
@@ -1472,7 +1580,10 @@ def process_message(
         )
 
     elif intent in ("CLARIFICATION", "UNKNOWN") and requires_clarification:
-        response_text = _CLARIFICATION_RESPONSE
+        if _SHORT_DIGITS_RE.match(message or ""):
+            response_text = _SHORT_NUMERIC_RESPONSE
+        else:
+            response_text = _CLARIFICATION_RESPONSE
 
     elif intent == "UNKNOWN":
         response_text = _UNKNOWN_RESPONSE
@@ -1658,6 +1769,19 @@ def process_message(
             response_text = deterministic_fallback
             _set_last_completed(session_id, intent)
 
+    # ── P1-3: consecutive unrecognized turns → examples / human help ──
+    # A single unknown message keeps the normal clarification; after N
+    # consecutive unrecognized turns the assistant stops repeating itself and
+    # offers concrete examples plus a path to a human agent instead.
+    if intent in ("UNKNOWN", "CLARIFICATION"):
+        streak = _bump_unrecognized(session_id)
+        if streak >= _UNRECOGNIZED_ESCALATION_THRESHOLD:
+            response_text = _UNRECOGNIZED_HELP_RESPONSE
+            requires_clarification = True
+            escalation_created = True
+    else:
+        _reset_unrecognized(session_id)
+
     # ── Step 3: Assemble final result ─────────────────────────────
     final_latency = round((time.time() - start_time) * 1000, 2)
 
@@ -1685,7 +1809,8 @@ def process_message(
         "latency_ms": final_latency,
         "response_source": llm_result["source"],
         "llm_enabled": DEEPSEEK_ENABLED,
-        "llm_fallback_used": llm_result["source"] != "deepseek",
+        # "fallback" means an LLM attempt failed — never merely "LLM disabled".
+        "llm_fallback_used": DEEPSEEK_ENABLED and llm_result["source"] != "deepseek",
         "llm_latency_ms": llm_result["latency_ms"],
         "llm_error_type": llm_result.get("error_type"),
         "routing_confidence": route.get("confidence", 1.0),

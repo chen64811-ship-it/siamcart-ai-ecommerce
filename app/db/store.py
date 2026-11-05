@@ -1084,14 +1084,31 @@ def mark_demo_delivered(db_path: str, order_id: str) -> Dict[str, Any]:
             raise ValueError("NOT_DELIVERABLE")
 
         delivered_at = _utcnow_iso()
-        conn.execute(
-            "UPDATE orders SET "
-            "order_status = ?, "
-            "shipment_status = ?, "
-            "delivered_at = ? "
-            "WHERE order_id = ?",
-            (ORDER_DELIVERED, SHIPMENT_DELIVERED, delivered_at, normalized),
-        )
+        # Cash on Delivery settles when the parcel arrives: the demo courier
+        # collects the payment at the door, so a pending COD order becomes
+        # paid at the same moment the delivery is recorded.
+        method = _normalize_payment_method(row["payment_method"])
+        cod_settles_now = method in _COD_METHODS and row["payment_status"] == "pending"
+        if cod_settles_now:
+            conn.execute(
+                "UPDATE orders SET "
+                "order_status = ?, "
+                "shipment_status = ?, "
+                "delivered_at = ?, "
+                "payment_status = 'paid', "
+                "paid_at = ? "
+                "WHERE order_id = ?",
+                (ORDER_DELIVERED, SHIPMENT_DELIVERED, delivered_at, delivered_at, normalized),
+            )
+        else:
+            conn.execute(
+                "UPDATE orders SET "
+                "order_status = ?, "
+                "shipment_status = ?, "
+                "delivered_at = ? "
+                "WHERE order_id = ?",
+                (ORDER_DELIVERED, SHIPMENT_DELIVERED, delivered_at, normalized),
+            )
         conn.commit()
     except Exception:
         conn.rollback()
@@ -1107,6 +1124,9 @@ def mark_demo_delivered(db_path: str, order_id: str) -> Dict[str, Any]:
         "tracking_number": (row and row["tracking_number"]) or "",
         "shipped_at": (row and row["shipped_at"]) or None,
         "delivered_at": delivered_at,
+        "payment_status": "paid" if cod_settles_now else ((row and row["payment_status"]) or ""),
+        "paid_at": delivered_at if cod_settles_now else (row and row["paid_at"]),
+        "cod_settled_on_delivery": cod_settles_now,
         "notice": DEMO_SHIPMENT_NOTICE,
         "action_executed": True,
     }

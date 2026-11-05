@@ -9,9 +9,15 @@ healthcheck_timeout_seconds = 300
 restart_policy_type = "ON_FAILURE"
 restart_policy_max_retries = 5
 
-# PostgreSQL production: attach Railway Postgres and set DATABASE_URL from
-# its reference variable. Alembic runs before the web process starts.
-# SQLite demo mode may still keep the runtime DB on a /data volume.
-# volume_mounts:
-#   - path = "/data"
-#     mount_path = "/data"
+# ── PostgreSQL production ───────────────────────────────────────────────
+# Attach a Railway Postgres service and reference its DATABASE_URL variable
+# (Railway injects it as postgresql://... or postgres://...). Alembic runs
+# before the web process starts, and app/db/connection.py normalizes the
+# legacy postgres:// scheme to postgresql:// automatically.
+#
+# ── Persistent volume (configured on the Railway service, not here) ─────
+# Mount a volume at /data. It holds:
+#   - STORE_DB_PATH=/data/orders.db   (SQLite fallback when DATABASE_URL is unset)
+#   - CHROMA_DIR=/data/chroma         (persistent ChromaDB policy index)
+# Both are set in the Dockerfile so the policy index and demo data survive
+# restarts and deploys.

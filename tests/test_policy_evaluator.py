@@ -155,11 +155,20 @@ class TestChunking:
 class TestIndexIdempotency:
     """Re-running indexing must not create duplicate chunks."""
 
-    def test_index_is_idempotent(self, chroma_tmp_dir):
-        """Running build_policy_index twice adds 0 new chunks on second run."""
-        n1 = build_policy_index(chroma_dir=chroma_tmp_dir)
-        assert n1 > 0
-        n2 = build_policy_index(chroma_dir=chroma_tmp_dir)
+    def test_index_is_idempotent(self, tmp_path):
+        """Running build_policy_index twice adds 0 new chunks on second run.
+
+        Uses a fresh directory (not the session index) so the first build
+        really adds chunks; the session directory is already populated by
+        the built_policy_index fixture.
+        """
+        from tests.conftest import _mock_get_embedding_model
+
+        chroma_dir = str(tmp_path / "idempotent_chroma")
+        with patch("app.agents.policy_index._get_embedding_model", _mock_get_embedding_model):
+            n1 = build_policy_index(chroma_dir=chroma_dir)
+            assert n1 > 0
+            n2 = build_policy_index(chroma_dir=chroma_dir)
         assert n2 == 0, f"Second run added {n2} new chunks — should be 0"
 
     def test_index_status_reports_count(self, chroma_tmp_dir):

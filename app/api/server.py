@@ -17,7 +17,6 @@ from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -32,6 +31,11 @@ from app.agents.orchestrator import (
     reset_session,
 )
 from app.agents.router import route_message
+from app.agents.language_policy import (
+    SERVER_ERROR_RESPONSE,
+    VALIDATION_ERROR_RESPONSE,
+    thai_status_message,
+)
 from app.api.store_routes import router as store_router
 from app.api.auth_routes import router as auth_router
 from app.db import store as store_db
@@ -42,7 +46,11 @@ from app.config import (
 )
 from app.observability import configure_logging, request_context_middleware
 from app.security import get_current_user
-from app.services.product_catalog import classify_product_question, product_catalog_lookup
+from app.services.product_catalog import (
+    classify_product_question,
+    product_catalog_lookup,
+    product_compare_lookup,
+)
 
 # ── Application ──────────────────────────────────────────────────────
 
@@ -77,18 +85,25 @@ app.include_router(auth_router)
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(_request: Request, exc: HTTPException):
+    # Keep the original detail for internal/admin API contracts (tests assert
+    # on it); customer-facing chat errors set a Thai detail directly instead.
     return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail}, headers=exc.headers)
 
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(_request: Request, exc: RequestValidationError):
-    return JSONResponse(status_code=422, content=jsonable_encoder({"detail": exc.errors()}))
+    # P0-2: a pydantic validation error is a customer-facing message — return
+    # a unified Thai explanation instead of leaking raw English field errors.
+    return JSONResponse(
+        status_code=422,
+        content={"detail": VALIDATION_ERROR_RESPONSE},
+    )
 
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(_request: Request, exc: Exception):
     logging.getLogger("siamcart.error").exception("unhandled_exception")
-    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+    return JSONResponse(status_code=500, content={"detail": SERVER_ERROR_RESPONSE})
 
 # Jinja2 templates — using inline HTML to avoid version-specific LRU bugs
 templates_dir = Path(__file__).resolve().parent.parent / "templates"
@@ -312,7 +327,7 @@ async def chat(
     message = request.message.strip()
 
     if not message:
-        raise HTTPException(status_code=400, detail="Message cannot be empty")
+        raise HTTPException(status_code=400, detail=thai_status_message(400))
 
     # ── Optional product context (Task 5D-1) ─────────────────────
     # Never trust product details sent by the browser — only product_id is
@@ -349,7 +364,16 @@ async def chat(
     #   - anything else (including product factual questions the existing
     #     router mislabels as GREETING due to substring keywords) → Product
     #     Catalog Lookup.
-    if product is not None:
+    if intent == "PRODUCT_COMPARE":
+        # Deterministic product comparison (demo UX extension). Works with or
+        # without a product context. Order/policy keywords keep priority: the
+        # router places PRODUCT_COMPARE after transaction intents and the
+        # STORE_POLICY pre-scan runs first.
+        products = store_db.list_products(store_db.STORE_DB_PATH)
+        result = product_compare_lookup(
+            message, session_id, products, context_product=product
+        )
+    elif product is not None:
         has_order_id = route.get("extracted_order_id") is not None
         # Task 8A — an order-total / purchased-items question is order work,
         # never product-catalog work, even when a product context is active.

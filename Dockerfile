@@ -21,12 +21,18 @@ COPY data/policies ./data/policies
 
 # Runtime configuration comes from environment variables only.
 # Never copy .env into the image.
+#
+# Production database: point DATABASE_URL at the Railway Postgres reference
+# variable (postgresql://...). When it is absent the app falls back to the
+# persistent SQLite file below, so the container still boots in demo mode.
+# CHROMA_DIR keeps the policy index on the persistent volume too.
 ENV DEEPSEEK_ENABLED=false \
     DEEPSEEK_API_KEY="" \
     DEEPSEEK_MODEL=deepseek-v4-flash \
     DEEPSEEK_BASE_URL=https://api.deepseek.com \
     DEEPSEEK_TIMEOUT_SECONDS=8 \
-    DATABASE_URL=sqlite:////data/orders.db
+    STORE_DB_PATH=/data/orders.db \
+    CHROMA_DIR=/data/chroma
 
 # Persistent storage is provided by the platform (Railway volume at /data).
 

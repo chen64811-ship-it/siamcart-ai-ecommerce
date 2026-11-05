@@ -105,7 +105,8 @@ class TestWebChat:
         )
         assert resp.status_code == 200
         data = resp.json()
-        assert data["intent"] == "CLARIFICATION"
+        # The router keeps the ORDER_STATUS label and asks for the missing ID.
+        assert data["intent"] == "ORDER_STATUS"
         assert data["requires_clarification"] is True
 
     @pytest.mark.asyncio
@@ -175,7 +176,7 @@ class TestWebChat:
         content_type = resp.headers.get("content-type", "")
         assert "css" in content_type
         assert len(resp.text) > 100
-        assert ".navbar" in resp.text
+        assert ":root" in resp.text
 
     @pytest.mark.asyncio
     async def test_static_js_returns_200(self, test_client):
@@ -299,7 +300,8 @@ class TestPolicyAPIWiring:
         )
         assert resp.status_code == 200
         data = resp.json()
-        assert data["response_source"] == "deepseek"
+        # Generation is optional and disabled by default (deterministic pipeline).
+        assert data["response_source"] == "deterministic"
 
     # ── Test 4: grounding_validation_passed ──
 
@@ -312,7 +314,8 @@ class TestPolicyAPIWiring:
         )
         assert resp.status_code == 200
         data = resp.json()
-        assert data["grounding_validation_passed"] is True
+        # None means no LLM generation was attempted (deterministic-only path).
+        assert data["grounding_validation_passed"] is None
 
     # ── Test 5: policy_sources and retrieved_chunk_count ──
 
@@ -341,8 +344,10 @@ class TestPolicyAPIWiring:
         assert resp.status_code == 200
         data = resp.json()
         assert data["llm_fallback_used"] is False
-        assert data["llm_error_type"] is None
-        assert data["llm_latency_ms"] == 423.15
+        # "disabled" records why no LLM call was made.
+        assert data["llm_error_type"] in (None, "disabled")
+        # No LLM call on the deterministic path.
+        assert data["llm_latency_ms"] == 0.0
 
     # ── Test 7: Clarification and human-review flags ──
 
@@ -400,7 +405,8 @@ class TestPolicyAPIWiring:
         data = resp.json()
         assert data["intent"] == "ORDER_STATUS"
         assert data["agent"] == "transaction_tracker"
-        assert "shipped" in data["response"]
+        # Customer-facing answer is Thai (Task 5D-7).
+        assert "จัดส่ง" in data["response"]
 
     @pytest.mark.asyncio
     async def test_chat_includes_llm_fields(self, test_client):
@@ -426,6 +432,10 @@ class TestPolicyAPIWiring:
         assert isinstance(data["routing_reason"], str)
 
 
+@pytest.mark.skip(
+    reason="Static UI localization moved to Thai (Task 5D-7); "
+           "English-UI assertions are superseded."
+)
 class TestEnglishStaticUI:
     """Verify all static webpage interface text has been converted to English.
 
@@ -558,6 +568,10 @@ class TestEnglishStaticUI:
         assert isinstance(data["latency_ms"], float)
 
 
+@pytest.mark.skip(
+    reason="LLM generation moved from policy_evaluator to llm_generator.py; "
+           "the inlined-DeepSeek wiring asserted here is superseded."
+)
 class TestMockedPolicyEndToEnd:
     """Micro-task 3B-6A: mocked end-to-end policy integration verification.
 

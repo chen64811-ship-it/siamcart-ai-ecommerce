@@ -77,8 +77,9 @@ class TestRouterClassification:
         assert r["intent"] == "ORDER_STATUS"
         assert r["extracted_order_id"] == "ORD-1001"
         r = route_message("Where is my order?")
-        assert r["intent"] == "UNKNOWN"  # asks for order ID via clarification
+        assert r["intent"] == "ORDER_STATUS"
         assert r["requires_clarification"] is True
+        assert "order_id" in r["missing_entities"]
         # A bare refund REQUEST keeps the RETURN_REFUND flow.
         r = route_message("ขอคืนสินค้า")
         assert r["intent"] == "RETURN_REFUND"

@@ -47,14 +47,15 @@
         return os === "processing";
     }
 
-    // Task 8D — Simulate Shipment is offered for paid + processing +
-    // not_shipped orders (the demo lifecycle gate in app/db/store.py).
+    // Task 8D — Simulate Shipment mirrors the backend demo lifecycle gate
+    // (SHIPPABLE_ORDER_STATUSES_8D = {"processing", "confirmed"} in
+    // app/db/store.py): processing + not_shipped is enough. COD orders stay
+    // pending until delivery, so requiring paid here would lock them out.
     function canSimulateShipment(order) {
         if (!order) return false;
-        var ps = String(order.payment_status || "").toLowerCase();
         var os = String(order.order_status || "").toLowerCase().replace(/[\s-]+/g, "_");
         var ss = String(order.shipment_status || "").toLowerCase().replace(/[\s-]+/g, "_");
-        return ps === "paid" && os === "processing" && ss === "not_shipped";
+        return (os === "processing" || os === "confirmed") && ss === "not_shipped";
     }
 
     // Task 8D — Mark Delivered is offered only while the parcel is in transit.
