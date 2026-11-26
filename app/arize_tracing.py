@@ -110,11 +110,53 @@ def _extract_output(result: Any, output_key: Optional[str], attr_keys) -> str:
     return ""
 
 
+# Real LLM failures (config states like "disabled"/"no_key" are not errors).
+_REAL_LLM_ERRORS = {
+    "timeout", "http_error", "validation",
+    "connection_error", "empty_output", "unknown",
+}
+
+
+def compute_eval_scores(result: Any) -> dict:
+    """Compute quality eval scores from a ``process_message`` result dict.
+
+    Emits OpenInference eval attributes (``eval.<metric>.score`` /
+    ``eval.<metric>.label``) so Arize surfaces them as eval metrics that can
+    be charted and monitored. Deterministic SiamCart responses are always
+    grounded (they come from policy/order data), so groundedness is structural.
+    """
+    if not isinstance(result, dict):
+        return {}
+    scores: dict = {}
+
+    response = str(result.get("response") or "").strip()
+    has_answer = bool(response)
+    scores["eval.answer_quality.score"] = 1.0 if has_answer else 0.0
+    scores["eval.answer_quality.label"] = "pass" if has_answer else "fail"
+
+    source = result.get("response_source", "")
+    llm_error = result.get("llm_error_type")
+    # deterministic answers are grounded by construction; DeepSeek-formatted
+    # answers are grounded only when they passed factual validation.
+    grounded = source == "deterministic" or (
+        source == "deepseek" and not result.get("llm_fallback_used")
+    )
+    scores["eval.groundedness.score"] = 1.0 if grounded else 0.0
+    scores["eval.groundedness.label"] = "grounded" if grounded else "ungrounded"
+
+    error_free = llm_error not in _REAL_LLM_ERRORS
+    scores["eval.error_free.score"] = 1.0 if error_free else 0.0
+    scores["eval.error_free.label"] = "pass" if error_free else "fail"
+
+    return scores
+
+
 def trace_span(
     name: str,
     kind: str = "CHAIN",
     attr_keys: Optional[list] = None,
     output_key: Optional[str] = "response",
+    with_evals: bool = False,
 ) -> Callable:
     """Wrap a function call in an OpenInference-aware OpenTelemetry span.
 
@@ -124,6 +166,7 @@ def trace_span(
       - ``output.value`` (``output_key`` from the dict return, or a JSON
         summary of ``attr_keys``)
     Any scalar values named in ``attr_keys`` are also copied as ``app.*``.
+    When ``with_evals`` is true, quality eval scores are attached to the span.
     """
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
@@ -144,6 +187,9 @@ def trace_span(
                         span.set_attribute(_OUTPUT_MIME, "text/plain")
                     if attr_keys:
                         _set_attrs(span, result, attr_keys)
+                    if with_evals:
+                        for key, value in compute_eval_scores(result).items():
+                            span.set_attribute(key, value)
                     span.set_status(Status(StatusCode.OK))
                     return result
                 except Exception as exc:

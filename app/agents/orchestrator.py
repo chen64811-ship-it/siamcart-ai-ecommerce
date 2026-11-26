@@ -1321,7 +1321,7 @@ def _safe_policy_query(query: str, top_k: int = 3) -> Dict:
         }
 
 
-@trace_span("siamcart.pipeline", kind="CHAIN", attr_keys=["intent", "agent", "latency_ms", "response_source", "llm_error_type", "routing_confidence"])
+@trace_span("siamcart.pipeline", kind="CHAIN", attr_keys=["intent", "agent", "latency_ms", "response_source", "llm_error_type", "routing_confidence"], with_evals=True)
 def process_message(
     message: str,
     session_id: Optional[str] = None,
