@@ -38,6 +38,7 @@ from app.agents.language_policy import (
 )
 from app.api.store_routes import router as store_router
 from app.api.auth_routes import router as auth_router
+from app.api.webhook_routes import router as webhook_router
 from app.db import store as store_db
 from app.db.orders import database_available
 from app.config import (
@@ -81,6 +82,7 @@ app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 # Storefront APIs (products + real order creation) — Task 5C
 app.include_router(store_router)
 app.include_router(auth_router)
+app.include_router(webhook_router)
 
 
 @app.exception_handler(HTTPException)

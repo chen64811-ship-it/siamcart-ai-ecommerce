@@ -47,6 +47,10 @@ def main():
 
     command = sys.argv[1]
 
+    # Initialize Arize tracing (no-op unless ARIZE_SPACE_ID + ARIZE_API_KEY set)
+    from app.arize_tracing import init_tracing
+    init_tracing()
+
     if command == "server":
         _start_server()
     elif command == "simulate":

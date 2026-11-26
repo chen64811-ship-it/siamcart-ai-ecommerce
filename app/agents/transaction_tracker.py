@@ -17,6 +17,7 @@ from typing import Dict, Optional
 
 from app.db.orders import query_order, init_database
 from app.config import DATA_DIR
+from app.arize_tracing import trace_span
 
 
 # Relaxed order-id matching — mirrors app/agents/router.py (demo UX fix):
@@ -114,6 +115,7 @@ def _detect_intent(message: str) -> str:
     return "CLARIFICATION"
 
 
+@trace_span("agent.transaction_tracker", kind="TOOL", attr_keys=["intent", "order_id", "order_found", "requires_clarification", "latency_ms"])
 def fetch_transaction_evidence(
     message: str,
     db_path: Optional[str] = None,

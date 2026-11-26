@@ -24,6 +24,7 @@ from app.agents.policy_index import (
     GENERAL_POLICY_KEYWORDS,
 )
 from app.config import DEEPSEEK_ENABLED, LLM_CONFIG
+from app.arize_tracing import trace_span
 
 
 # ── Constants ─────────────────────────────────────────────────────────
@@ -166,6 +167,7 @@ _INDEX_NOT_SETUP = "ระบบนโยบายยังไม่ได้ถ
 # ── Public API ────────────────────────────────────────────────────────
 
 
+@trace_span("agent.policy_evaluator", kind="RETRIEVER", attr_keys=["retrieval_source", "retrieved_chunk_count", "top_similarity_score", "response_source", "llm_error_type"])
 def evaluate_policy_query(
     query: str,
     top_k: int = 3,

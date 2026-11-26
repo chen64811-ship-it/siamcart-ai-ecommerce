@@ -36,6 +36,7 @@ from app.agents.language_policy import (
 )
 from app.db import store as store_db
 from app.config import DEEPSEEK_ENABLED
+from app.arize_tracing import trace_span
 
 
 # ── Controlled response templates (keep only for non-data paths) ───────
@@ -1320,6 +1321,7 @@ def _safe_policy_query(query: str, top_k: int = 3) -> Dict:
         }
 
 
+@trace_span("siamcart.pipeline", kind="CHAIN", attr_keys=["intent", "agent", "latency_ms", "response_source", "llm_error_type", "routing_confidence"])
 def process_message(
     message: str,
     session_id: Optional[str] = None,

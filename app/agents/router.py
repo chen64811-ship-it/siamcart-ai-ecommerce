@@ -10,6 +10,8 @@ Returns a structured RouteDecision dict.
 import re
 from typing import Dict, List, Optional, Any, Tuple
 
+from app.arize_tracing import trace_span
+
 # ── Order ID pattern ──────────────────────────────────────────────────
 # Relaxed order-id matching (demo UX fix):
 #   - "ORD-1001" / "ORD1001" / "ORD 1001" / "ord - 1001" all normalize to
@@ -514,6 +516,7 @@ def _classify_intent(message: str) -> str:
     return intent
 
 
+@trace_span("agent.router", kind="AGENT", attr_keys=["intent", "target_agent", "confidence", "routing_reason", "extracted_order_id"])
 def route_message(message: str) -> Dict[str, Any]:
     """Classify a customer message and return a structured RouteDecision.
 
